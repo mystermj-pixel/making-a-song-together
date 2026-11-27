@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>함께 만드는 노래</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+/* VOICE: 다정하고 놀이 같은, 병실에서도 차분한 톤
+   IDEA: 오르골 종이띠와 작은 무대 — 구멍을 찍으면 무대 위 동물 친구가 노래한다
+   PICTURE: 아이 그림이 걸린 무대(춤추는 동물) + 9줄×16칸 작곡판
+   COLOUR and TYPE: 코랄 띠 + 햇살 노랑 + 먹색, 아이별 동물 색 / Jua 제목, Gowun Dodum 본문
+   LAYOUT: 위 띠 → 무대 → 소리 도구 → 작곡판 → 응원 → 탭(가사·그림·목소리·저장·선생님) */
+:root{color-scheme:light dark;
+--bg:light-dark(#ffffff,#16141d);--ink:light-dark(#1d1b2e,#f3f0fa);--soft:light-dark(#6b6880,#aaa5bd);
+--band:light-dark(#ff5a4e,#c8382e);--sun:#ffd23f;--cell:light-dark(#f1eff6,#26232f);--cell2:light-dark(#e6e3ef,#2e2a39);
+--line:light-dark(#dcd8e6,#3a3546);--card:light-dark(#fff,#1f1c28)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 "Gowun Dodum",system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3,.jua{font-family:Jua,"Gowun Dodum",sans-serif;font-weight:400}
+button,input,select,textarea{font:inherit;color:inherit}
+button{min-height:44px;border-radius:14px;border:2px solid var(--line);background:var(--card);padding:0 14px;cursor:pointer}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible,.cell:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+button[aria-pressed=true]{border-color:var(--ink);box-shadow:0 0 0 3px var(--sun)}
+select{min-height:44px;border-radius:12px;border:2px solid var(--line);background:var(--card);padding:0 8px}
+.top{background:var(--band);color:#fff;padding:18px max(4vw,16px) 22px}
+.top h1{margin:0;font-size:clamp(30px,5vw,44px);line-height:1.05}
+.top p{margin:4px 0 0;opacity:.92}
+.band{padding:clamp(18px,3vw,36px) max(4vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+.card{background:var(--card);border:2px solid var(--line);border-radius:22px;padding:18px}
+/* 입장 */
+#join .card{max-width:640px;margin:0 auto;padding:24px}
+.lab{display:block;font-family:Jua;font-size:22px;margin:18px 0 8px}
+.lab:first-child{margin-top:0}
+.code{width:100%;font-size:34px;letter-spacing:.2em;text-align:center;padding:10px;border-radius:14px;border:2px solid var(--line);background:var(--cell)}
+.pick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.pick button{display:flex;align-items:center;gap:10px;min-height:64px;font-family:Jua;font-size:19px;text-align:start}
+.dot{flex:none;width:30px;height:30px;border-radius:50%}
+.go{width:100%;margin-top:20px;min-height:60px;background:var(--band);color:#fff;border:0;font-family:Jua;font-size:24px}
+.hint{color:var(--soft);font-size:14px;margin:8px 0 0}
+.face{flex:none;width:44px;height:44px;display:block}
+/* 위 띠 */
+.bar{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center;justify-content:space-between}
+.title{font-family:Jua;font-size:clamp(22px,3.4vw,30px);border:0;border-bottom:3px dashed rgba(255,255,255,.6);background:transparent;color:#fff;width:min(460px,100%);padding:2px 0}
+.title::placeholder{color:rgba(255,255,255,.75)}
+.peers{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.peer{width:40px;height:40px;border-radius:50%;background:#fff;padding:2px;border:3px solid #fff}
+.peer svg{width:100%;height:100%}
+.roomtag{background:rgba(0,0,0,.18);border-radius:999px;padding:4px 12px;font-size:15px;white-space:nowrap}
+.status{font-size:14px;margin-top:8px;opacity:.95}
+/* 무대 */
+.stage{position:relative;height:190px;border-radius:22px;overflow:hidden;background:linear-gradient(180deg,light-dark(#ffe8a3,#3b2f57),light-dark(#ffb4a8,#5a2f45));background-size:cover;background-position:center;display:flex;align-items:flex-end;justify-content:center;gap:clamp(8px,3vw,28px);padding:0 12px 10px}
+.stage::after{content:"";position:absolute;left:0;right:0;bottom:0;height:34px;background:rgba(40,20,30,.35);z-index:0}
+.fig{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:2px}
+.fig svg{width:clamp(56px,9vw,84px);height:clamp(56px,9vw,84px);filter:drop-shadow(0 4px 0 rgba(0,0,0,.18))}
+.fig span{font-family:Jua;font-size:14px;color:#fff;background:rgba(0,0,0,.35);border-radius:999px;padding:0 8px}
+.fig.hop svg{animation:hop .3s ease-out}
+@keyframes hop{0%{transform:translateY(0)}40%{transform:translateY(-22px) scale(1.07)}100%{transform:translateY(0)}}
+.empty-stage{position:relative;z-index:1;color:#fff;font-family:Jua;font-size:18px;margin-bottom:50px;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+.float{position:absolute;z-index:2;font-family:Jua;font-size:24px;color:#fff;background:rgba(0,0,0,.45);border-radius:999px;padding:4px 14px;display:flex;align-items:center;gap:6px;animation:rise 1.8s ease-out forwards;pointer-events:none}
+.float svg{width:30px;height:30px}
+@keyframes rise{0%{transform:translateY(0);opacity:0}15%{opacity:1}100%{transform:translateY(-120px);opacity:0}}
+/* 도구 */
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0}
+.play{min-width:120px;background:var(--ink);color:var(--bg);border:0;font-family:Jua;font-size:21px}
+.mood{font-family:Jua;font-size:18px}
+.tempo{display:flex;align-items:center;gap:10px;flex:1 1 200px;max-width:320px}
+.tempo input{flex:1;accent-color:var(--band);height:44px}
+.tempo b{font-family:Jua;font-weight:400;min-width:3em;white-space:nowrap}
+.danger.armed{background:var(--band);color:#fff;border-color:var(--band)}
+/* 작곡판 */
+.board{background:var(--card);border:2px solid var(--line);border-radius:22px;padding:14px 14px 10px}
+.scroll{overflow-x:auto;padding-bottom:4px}
+.grid{display:grid;grid-template-columns:76px repeat(16,minmax(34px,1fr));gap:5px;min-width:720px}
+.easy .grid{grid-template-columns:76px repeat(8,minmax(52px,1fr));min-width:0}
+.easy .nx{display:none!important}
+.easy .cell,.easy .rl{min-height:64px}
+.rl{position:relative;display:flex;align-items:center;justify-content:center;font-family:Jua;font-size:18px;border-radius:12px;min-height:46px;border:0;padding:0;color:#fff;line-height:1.1}
+.rl .own{position:absolute;right:-4px;top:-6px;width:24px;height:24px;border-radius:50%;background:#fff;padding:1px}
+.rl .own svg{width:100%;height:100%}
+.sep{grid-column:1/-1;height:6px}
+.cell{min-height:46px;border-radius:12px;border:0;background:var(--cell);padding:0;display:grid;place-items:center;font-family:Jua;font-size:16px;color:#fff;transition:transform .08s}
+.cell.alt{background:var(--cell2)}
+.cell.on{box-shadow:inset 0 -4px 0 rgba(0,0,0,.2)}
+.cell.now{outline:3px solid var(--sun);outline-offset:-1px}
+.cell.now.on{transform:scale(1.08)}
+.cell.lockd{opacity:.45}
+.nums{display:grid;grid-template-columns:76px repeat(16,minmax(34px,1fr));gap:5px;min-width:720px;margin-top:6px;color:var(--soft);font-size:13px;text-align:center}
+.easy .nums{grid-template-columns:76px repeat(8,minmax(52px,1fr));min-width:0}
+.cheers button{font-family:Jua;font-size:19px;min-width:96px}
+.heart{color:#ff4f81}
+/* 탭 */
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.tabs button{font-family:Jua;font-size:18px;border-radius:14px 14px 0 0}
+.tabs button[aria-selected=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.panel{border-radius:0 22px 22px 22px}
+.panel h3{margin:0 0 6px;font-size:22px}
+.lyr{display:grid;gap:8px;margin:12px 0}
+.lyr div{display:flex;align-items:center;gap:10px;font-size:19px}
+.lyr div svg{width:34px;height:34px;flex:none}
+.lyr input{flex:1;min-height:48px;border-radius:12px;border:2px solid var(--line);background:var(--cell);padding:0 12px;font-size:18px}
+.pad{width:100%;max-width:720px;aspect-ratio:16/9;border-radius:16px;border:2px solid var(--line);background:#fff;touch-action:none;display:block}
+.swatch{width:44px;height:44px;border-radius:50%;padding:0;border:3px solid var(--line)}
+.list{display:grid;gap:8px;margin-top:10px}
+.list>div{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--cell)}
+.list>div b{font-family:Jua;font-weight:400;font-size:18px}
+.list small{color:var(--soft)}
+table{border-collapse:collapse;width:100%;margin-top:10px;font-size:15px}
+th,td{padding:8px;border-bottom:1px solid var(--line);text-align:start}
+td.n{text-align:end;font-variant-numeric:tabular-nums}
+.note{color:var(--soft);font-size:14px;margin:10px 0 0}
+.check{display:flex;align-items:center;gap:10px;min-height:44px}
+.check input{width:24px;height:24px;accent-color:var(--band)}
+[hidden]{display:none!important}
+.vtabs{display:flex;gap:8px;margin:16px 0 0}
+.vtabs button{font-family:Jua;font-size:20px;min-height:52px;padding:0 22px}
+.vtabs button[aria-selected=true]{background:var(--band);color:#fff;border-color:var(--band)}
+.pcard{padding:14px}
+.trail{width:100%;height:200px;display:block;border-radius:14px;background:light-dark(#fbfaff,#1a1822)}
+.keys{position:relative;height:160px;margin-top:6px;user-select:none;-webkit-user-select:none;touch-action:none}
+.easy .keys{height:200px}
+.wk{position:absolute;top:0;height:100%;border:1px solid #cfcbdb;background:#fff;border-radius:0 0 12px 12px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;font-family:Jua;color:#6b6880;font-size:17px;cursor:pointer}
+.bk{position:absolute;top:0;height:60%;background:#1d1b2e;border-radius:0 0 9px 9px;z-index:2;cursor:pointer}
+.wk.down,.bk.down{transition:none}
+@media(max-width:600px){.pick{grid-template-columns:repeat(2,minmax(0,1fr))}.play{flex:1}.stage{height:160px}}
+@media(prefers-reduced-motion:reduce){.cell{transition:none}.cell.now.on{transform:none}.fig.hop svg,.float{animation:none}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+
+<section id="join">
+  <header class="top"><div class="wrap">
+    <h1>함께 만드는 노래</h1>
+    <p>멀리 있어도 같은 방 번호로 들어오면, 한 곡을 같이 만들 수 있어요.</p>
+  </div></header>
+  <div class="band"><div class="card">
+    <label class="lab" for="code">1. 방 번호 여섯 자리</label>
+    <input id="code" class="code" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="000000">
+    <p class="hint">선생님이 알려준 번호를 넣어요. 새 방은 남들이 맞히기 어려운 번호를 정해서 친구들에게 알려 주세요.</p>
+    <p class="lab">2. 나는 어떤 친구로 들어갈까?</p>
+    <div class="pick" id="animals" role="group" aria-label="동물 고르기"></div>
+    <p class="lab">3. 오늘 내 마음은 무슨 색이야?</p>
+    <div class="pick" id="feels" role="group" aria-label="오늘의 마음 색"></div>
+    <button class="go" id="go" disabled>작곡판 열기</button>
+    <p class="hint">이름 대신 동물로만 표시돼요. 이름, 병원, 병실은 적지 않아요.</p>
+  </div></div>
+</section>
+
+<section id="studio" hidden>
+  <header class="top"><div class="wrap">
+    <div class="bar">
+      <input id="title" class="title" maxlength="30" placeholder="우리 노래 제목을 지어요" aria-label="노래 제목">
+      <div class="peers"><span class="roomtag" id="roomtag"></span><span class="peers" id="peers"></span></div>
+    </div>
+    <div class="status" id="status" aria-live="polite">연결하는 중…</div>
+  </div></header>
+  <div class="band"><div class="wrap" id="main">
+    <div class="stage" id="stage" aria-label="무대"></div>
+
+    <div class="vtabs" role="tablist">
+      <button data-view="grid" aria-selected="true">작곡판</button>
+      <button data-view="piano" aria-selected="false">함께 피아노</button>
+    </div>
+    <div class="row">
+      <button class="play" id="play">▶ 듣기</button>
+      <button id="together">다 같이 듣기</button>
+      <span class="jua" style="font-size:18px">분위기</span>
+      <button class="mood" data-mood="fun">신나게</button>
+      <button class="mood" data-mood="calm">잔잔하게</button>
+      <button class="mood" data-mood="mystic">신비롭게</button>
+    </div>
+    <div class="row">
+      <label for="inst" class="jua" style="font-size:18px">악기</label>
+      <select id="inst"><option value="piano">피아노</option><option value="xylo">실로폰</option><option value="musicbox">오르골</option><option value="space">우주 소리</option><option value="toy">장난감</option></select>
+      <div class="tempo"><label for="bpm">빠르기</label><input id="bpm" type="range" min="60" max="150" step="5" value="96"><b id="bpmv">96</b></div>
+    </div>
+
+    <div id="gridView">
+    <div class="board">
+      <div class="scroll">
+        <div class="grid" id="grid" role="grid" aria-label="작곡판"></div>
+        <div class="nums" aria-hidden="true" id="nums"></div>
+      </div>
+    </div>
+
+    <div class="row">
+      <button id="starter">기본 박자 넣기</button>
+      <button id="mine">내 소리 지우기</button>
+      <button id="all" class="danger">모두 지우기</button>
+      <button id="laneBtn" aria-pressed="false">내 줄 정하기</button>
+      <button id="easyBtn" aria-pressed="false">쉬운 모드</button>
+      <button id="leave">다른 방으로</button>
+    </div>
+    </div>
+    <div id="pianoView" hidden>
+      <div class="card pcard">
+        <canvas class="trail" id="trail"></canvas>
+        <div class="keys" id="keys" aria-label="피아노 건반"></div>
+      </div>
+      <div class="row">
+        <button id="octDown">◀ 낮은 소리</button><button id="octUp">높은 소리 ▶</button>
+        <button id="pRec">● 연주 녹음</button><button id="pPlay" disabled>▶ 녹음 듣기</button><button id="pDl" disabled>녹음 내려받기 (WAV)</button>
+      </div>
+      <p class="note">건반을 누르면 같은 방 친구들에게도 바로 들리고, 내 동물 색 막대가 떠올라요. 악기를 바꾸면 피아노 소리도 바뀌어요. 컴퓨터에서는 A S D F G H J K(흰 건반)와 W E T Y U(검은 건반)로도 칠 수 있어요.</p>
+    </div>
+    <div class="row cheers">
+      <span class="jua" style="font-size:18px">응원하기</span>
+      <button data-cheer="heart"><span class="heart">♥</span> 좋아</button>
+      <button data-cheer="clap">짝짝짝</button>
+      <button data-cheer="best">최고야!</button>
+    </div>
+    <p class="note" id="hintline">칸을 누르면 내 색으로 소리가 놓이고, 다시 누르면 빠져요. 왼쪽 글자를 누르면 소리를 미리 들을 수 있어요. 위 다섯 줄은 멜로디라서 어떻게 찍어도 잘 어울려요.</p>
+
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="lyrics" aria-selected="true">가사판</button>
+      <button role="tab" data-tab="art" aria-selected="false">우리 그림</button>
+      <button role="tab" data-tab="voice" aria-selected="false">내 목소리</button>
+      <button role="tab" data-tab="save" aria-selected="false">저장·내려받기</button>
+      <button role="tab" data-tab="teacher" aria-selected="false" id="teacherTab" hidden>선생님</button>
+    </div>
+
+    <div class="card panel" data-panel="lyrics">
+      <h3>우리 노래 가사판</h3>
+      <p class="note" style="margin-top:0">한 친구가 한 줄씩 써요. 마음 그림에서 고른 단어를 넣어 보세요.</p>
+      <div class="lyr" id="lyrics"></div>
+    </div>
+
+    <div class="card panel" data-panel="art" hidden>
+      <h3>우리 그림</h3>
+      <p class="note" style="margin-top:0">그림을 그리고 '무대에 걸기'를 누르면 모두의 무대 배경이 바뀌어요.</p>
+      <div class="row" id="swatches"></div>
+      <canvas class="pad" id="pad" width="640" height="360" aria-label="그림판"></canvas>
+      <div class="row">
+        <button id="thin" aria-pressed="false">가는 붓</button><button id="thick" aria-pressed="true">굵은 붓</button>
+        <button id="eraser" aria-pressed="false">지우개</button><button id="padClear">새 종이</button>
+        <button id="hang" class="play" style="min-width:0;font-size:18px">무대에 걸기</button>
+      </div>
+    </div>
+
+    <div class="card panel" data-panel="voice" hidden>
+      <h3>내 목소리 넣기</h3>
+      <div id="voiceOff"><p class="note" style="margin-top:0">목소리 줄은 선생님이 켜야 쓸 수 있어요. 보호자 동의를 받은 뒤에 켜 주세요.</p></div>
+      <div id="voiceOn" hidden>
+        <p class="note" style="margin-top:0">"야호", "사랑해"처럼 짧게 녹음해요. 앞부분 1초 정도만 쓰여요. 녹음한 목소리는 이 방 친구들만 들을 수 있어요.</p>
+        <label class="check"><input type="checkbox" id="consent"> 보호자가 목소리 녹음에 동의했어요</label>
+        <div class="row">
+          <label class="play" style="display:inline-flex;align-items:center;justify-content:center;border-radius:14px;padding:0 16px;cursor:pointer;min-height:44px" id="recLabel">녹음 파일 고르기<input type="file" id="rec" accept="audio/*" capture hidden disabled></label>
+          <button id="micRec" disabled>● 바로 녹음 (3초)</button>
+          <button id="voiceTry" disabled>내 목소리 듣기</button>
+          <button id="voiceDel" disabled>내 목소리 지우기</button>
+        </div>
+        <p class="note">녹음이 끝나면 작곡판 맨 아래 '목소리' 줄에 칸을 찍어 보세요. 내 칸에서는 내 목소리가 나와요.</p>
+      </div>
+    </div>
+
+    <div class="card panel" data-panel="save" hidden>
+      <h3>회차 저장</h3>
+      <div class="row" style="margin-top:6px">
+        <input id="saveName" maxlength="20" placeholder="예: 1회차" style="min-height:44px;border-radius:12px;border:2px solid var(--line);background:var(--cell);padding:0 12px;flex:1 1 180px;max-width:280px">
+        <button id="saveNow">지금 곡 저장</button>
+      </div>
+      <div class="list" id="saves"></div>
+      <h3 style="margin-top:22px">내려받기</h3>
+      <div class="row" id="dlRow">
+        <label>반복 <select id="reps"><option value="2">2번</option><option value="4" selected>4번</option><option value="8">8번</option></select></label>
+        <button id="dl">곡 내려받기 (WAV)</button>
+        <button id="cover">앨범 표지 내려받기</button>
+      </div>
+      <p class="note" id="dlNote">곡은 WAV 파일로 받아요. 앨범 표지에는 제목, 우리 그림, 함께한 친구들, 작곡판 모양이 담겨요.</p>
+    </div>
+
+    <div class="card panel" data-panel="teacher" hidden>
+      <h3>선생님 모드</h3>
+      <div id="tLogin">
+        <p class="note" style="margin-top:0">이 방의 선생님 PIN(숫자 4~8자리)을 넣어요. 이 방에서 처음 넣은 PIN이 선생님 PIN이 되니, 아이들에게는 알려 주지 마세요.</p>
+        <div class="row"><input id="tPin" type="password" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="PIN" style="min-height:44px;border-radius:12px;border:2px solid var(--line);background:var(--cell);padding:0 12px;width:160px;font-size:18px"><button id="tGo">선생님 모드 켜기</button></div>
+      </div>
+      <div id="tTools" hidden>
+      <div class="row">
+        <button id="lockBtn" aria-pressed="false">작곡판 잠그기</button>
+        <button id="voiceBtn" aria-pressed="false">목소리 줄 켜기</button>
+        <button id="lanesFree">줄 맡기 모두 풀기</button>
+        <button id="tEasy">유아용 쉬운 모드 안내</button>
+      </div>
+      <p class="note" id="tEasyNote" hidden>쉬운 모드는 아이 기기에서 각자 켜요. 멜로디 3줄(솔·미·도)과 쿵, 8칸만 크게 보여서 유아도 누르기 쉬워요.</p>
+      <h3 style="margin-top:18px">창작 기록</h3>
+      <p class="note" style="margin-top:0">아이마다 소리를 몇 번 놓고 고쳤는지 자동으로 남아요. 콘테스트 창작 과정 심사 자료로 쓸 수 있어요.</p>
+      <table class="stack"><thead><tr><th>친구</th><th>놓은 소리</th><th>뺀 소리</th><th>마지막 활동</th></tr></thead><tbody id="logBody"></tbody></table>
+      <div class="row"><button id="csv">기록 내려받기 (CSV)</button></div>
+      </div>
+    </div>
+  </div></div>
+</section>
+
+<script>
+{
+/* ---------- 기본 데이터 ---------- */
+const ANIMALS={rabbit:['토끼','#ff6fae'],bear:['곰','#a8703f'],whale:['고래','#3482ff'],fox:['여우','#ff8418'],owl:['부엉이','#8b5cf6'],turtle:['거북','#1fa774']};
+const FEELS={red:['신나요','#ff5a4e','fun'],yellow:['기뻐요','#ffc93c','fun'],green:['편안해요','#2fb36d','calm'],blue:['차분해요','#3482ff','calm'],purple:['궁금해요','#8b5cf6','mystic'],gray:['조금 힘들어요','#8e8aa0','calm']};
+const MOODS={fun:{inst:'xylo',bpm:124,scale:'major'},calm:{inst:'musicbox',bpm:80,scale:'major'},mystic:{inst:'space',bpm:92,scale:'minor'}};
+const SCALES={major:{f:[880,783.99,659.25,587.33,523.25],n:['라','솔','미','레','도']},minor:{f:[932.33,783.99,698.46,622.25,523.25],n:['시','솔','파','미','도']}};
+const ROWS=[
+ {id:'m5',k:'mel',i:0,c:'#ff5a4e'},{id:'m4',k:'mel',i:1,c:'#ff8a3d',easy:1},{id:'m3',k:'mel',i:2,c:'#f2b100',easy:1},
+ {id:'m2',k:'mel',i:3,c:'#2fb36d'},{id:'m1',k:'mel',i:4,c:'#3482ff',easy:1},
+ {id:'bs',n:'둥',k:'bass',f:130.81,c:'#5b4bd6',sep:1},{id:'kk',n:'쿵',k:'kick',c:'#3b3650',easy:1},
+ {id:'cl',n:'짝',k:'clap',c:'#6b6480'},{id:'hh',n:'칙',k:'hat',c:'#948da8'},
+ {id:'vo',n:'목소리',k:'voice',c:'#d6458b',sep:1}];
+const STEPS=16,$=s=>document.getElementById(s),qa=(s,r=document)=>[...r.querySelectorAll(s)];
+const DEF={title:'',bpm:96,mood:'',inst:'piano',scale:'major',lock:false,lanes:{},voiceOn:false};
+let me=null,feel=null,code='',cells=new Map(),S={...DEF,lanes:{}},lyrics=new Map(),voices=new Map(),art='',saves=[],logs=[];
+let sb=null,chan=null,unsubs=[],canWrite=true,live=false,teacher=false,tPin='',loadT=0,easy=false,laneMode=false,peerList=[];
+const myLog=[];let logT=0,titleT=0,bpmT=0,lyrT=0;
+const SB_URL='https://mkdtosflrccynqwsqsog.supabase.co',SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rZHRvc2ZscmNjeW5xd3Nxc29nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUwNTQwNTEsImV4cCI6MjExMDYzMDA1MX0.Qv0knGDS8I1sDToBdQv-blHMX-yCIU811s5nFB6oBc0';
+try{if(window.supabase)sb=supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false}})}catch(e){sb=null}
+const ok=r=>{if(r&&r.error)throw r.error;return r?r.data:null};
+async function writeCell(id,a){return ok(a?await sb.from('song_cells').upsert({code,id,by:a}):await sb.from('song_cells').delete().eq('code',code).eq('id',id))}
+
+/* ---------- 동물 얼굴 그림 ---------- */
+function face(a){
+  const c=ANIMALS[a]?ANIMALS[a][1]:'#999';let ears='';
+  if(a==='rabbit')ears=`<ellipse cx="36" cy="22" rx="8" ry="20" fill="${c}"/><ellipse cx="64" cy="22" rx="8" ry="20" fill="${c}"/><ellipse cx="36" cy="24" rx="3.5" ry="13" fill="#ffd0e4"/><ellipse cx="64" cy="24" rx="3.5" ry="13" fill="#ffd0e4"/>`;
+  else if(a==='bear')ears=`<circle cx="25" cy="30" r="12" fill="${c}"/><circle cx="75" cy="30" r="12" fill="${c}"/><circle cx="25" cy="30" r="6" fill="#e9c39b"/><circle cx="75" cy="30" r="6" fill="#e9c39b"/>`;
+  else if(a==='fox')ears=`<path d="M18 40 L26 8 L44 28Z" fill="${c}"/><path d="M82 40 L74 8 L56 28Z" fill="${c}"/>`;
+  else if(a==='owl')ears=`<path d="M22 34 L24 12 L40 26Z" fill="${c}"/><path d="M78 34 L76 12 L60 26Z" fill="${c}"/>`;
+  else if(a==='whale')ears=`<path d="M50 20 C46 10 40 8 36 10 M50 20 C54 10 60 8 64 10" stroke="#9fd0ff" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+  else ears=`<circle cx="50" cy="60" r="38" fill="#7a5b2e"/>`;
+  const eyes=a==='owl'?`<circle cx="38" cy="54" r="12" fill="#fff"/><circle cx="62" cy="54" r="12" fill="#fff"/>`:'';
+  const snout=a==='fox'||a==='bear'?`<ellipse cx="50" cy="70" rx="14" ry="10" fill="#fff" opacity=".85"/>`:'';
+  return `<svg viewBox="0 0 100 100" aria-hidden="true">${ears}<circle cx="50" cy="58" r="34" fill="${c}"/>${eyes}${snout}<circle cx="38" cy="54" r="5" fill="#1d1b2e"/><circle cx="62" cy="54" r="5" fill="#1d1b2e"/><circle cx="39.5" cy="52.5" r="1.6" fill="#fff"/><circle cx="63.5" cy="52.5" r="1.6" fill="#fff"/><circle cx="29" cy="66" r="5" fill="#ff9db8" opacity=".7"/><circle cx="71" cy="66" r="5" fill="#ff9db8" opacity=".7"/><path d="M43 69 Q50 76 57 69" stroke="#1d1b2e" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`;
+}
+
+/* ---------- 입장 ---------- */
+$('animals').innerHTML=Object.entries(ANIMALS).map(([id,[n]])=>`<button data-a="${id}" aria-pressed="false"><span class="face">${face(id)}</span>${n}</button>`).join('');
+$('feels').innerHTML=Object.entries(FEELS).map(([id,[n,c]])=>`<button data-f="${id}" aria-pressed="false"><span class="dot" style="background:${c}"></span>${n}</button>`).join('');
+try{const s=JSON.parse(localStorage.getItem('song-me')||'{}');if(ANIMALS[s.a])me=s.a;if(/^\d{6}$/.test(s.c||''))$('code').value=s.c;easy=!!s.e}catch(e){}
+const ready=()=>{$('go').disabled=!(me&&feel&&/^\d{6}$/.test($('code').value));qa('#animals button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.a===me));qa('#feels button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.f===feel))};
+$('animals').addEventListener('click',e=>{const b=e.target.closest('button');if(b){me=b.dataset.a;ready()}});
+$('feels').addEventListener('click',e=>{const b=e.target.closest('button');if(b){feel=b.dataset.f;ready()}});
+$('code').addEventListener('input',e=>{e.target.value=e.target.value.replace(/\D/g,'').slice(0,6);ready()});
+$('go').addEventListener('click',enter);ready();
+
+/* ---------- 작곡판 ---------- */
+const g=$('grid');
+g.innerHTML=ROWS.map(r=>(r.sep?`<div class="sep${r.id==='vo'?' vrow':''} nx"></div>`:'')+`<button class="rl${r.easy?'':' nx'}${r.id==='vo'?' vrow':''}" data-row="${r.id}" style="background:${r.c}"></button>`+
+ Array.from({length:STEPS},(_,s)=>`<button class="cell${Math.floor(s/4)%2?' alt':''}${(r.easy&&s<8)?'':' nx'}${r.id==='vo'?' vrow':''}" data-id="${r.id}-${s}" data-s="${s}" aria-pressed="false"></button>`).join('')).join('');
+$('nums').innerHTML='<span></span>'+Array.from({length:STEPS},(_,s)=>`<span class="${s<8?'':'nx'}">${s%4===0?s/4+1+'마디':''}</span>`).join('');
+const cellEls=qa('.cell',g),byId=new Map(cellEls.map(c=>[c.dataset.id,c]));
+const rowOf=id=>ROWS.find(r=>id.startsWith(r.id+'-'));
+const rowName=r=>r.k==='mel'?SCALES[S.scale].n[r.i]:r.n;
+const canPlace=rid=>{if(!canWrite)return false;if(S.lock&&(live||!teacher))return false;const o=S.lanes[rid];return !ANIMALS[o]||o===me||teacher};
+function paint(){
+  for(const el of cellEls){const a=cells.get(el.dataset.id),on=!!ANIMALS[a],rid=el.dataset.id.split('-')[0];
+    el.classList.toggle('on',on);el.style.background=on?ANIMALS[a][1]:'';el.textContent=on?ANIMALS[a][0][0]:'';
+    el.setAttribute('aria-pressed',on);el.classList.toggle('lockd',!canPlace(rid));
+    const r=rowOf(el.dataset.id);el.setAttribute('aria-label',`${rowName(r)} ${+el.dataset.s+1}번째 칸${on?', '+ANIMALS[a][0]:''}`)}
+  for(const b of qa('.rl',g)){const r=ROWS.find(x=>x.id===b.dataset.row),o=S.lanes[r.id];
+    b.innerHTML='';b.append(rowName(r));
+    if(ANIMALS[o]){const s=document.createElement('span');s.className='own';s.innerHTML=face(o);b.append(s)}
+    b.setAttribute('aria-label',laneMode?`${rowName(r)} 줄 맡기`:`${rowName(r)} 소리 미리 듣기`)}
+  qa('.vrow',g).forEach(el=>el.hidden=!S.voiceOn);
+  stageRender();
+}
+g.addEventListener('click',e=>{
+  const rl=e.target.closest('.rl');
+  if(rl){const r=ROWS.find(x=>x.id===rl.dataset.row);
+    if(laneMode){claimLane(r.id);return}
+    sound(r,ac().currentTime+.01,me);return}
+  const c=e.target.closest('.cell');if(c)toggle(c.dataset.id)});
+
+async function toggle(id){
+  const rid=id.split('-')[0];
+  if(!canPlace(rid)){setStatus(S.lock&&!teacher?'선생님이 작곡판을 잠깐 멈췄어요.':!canWrite?'이 계정은 보기만 할 수 있어요.':'이 줄은 다른 친구가 맡았어요. 내 줄에 찍어 볼까요?');return}
+  const cur=cells.get(id);
+  if(cur){cells.delete(id);logIt('-',id)}else{cells.set(id,me);logIt('+',id);sound(rowOf(id),ac().currentTime+.01,me)}
+  paint();
+  if(!live)return;
+  try{await writeCell(id,cur?null:me)}catch(e){writeErr(e)}
+}
+function writeErr(e){
+  const c=e&&e.code;
+  if(c==='42501')setStatus(S.lock?'선생님이 작곡판을 잠깐 멈췄어요.':'지금은 저장할 수 없어요. 목소리 줄이 꺼져 있는지 확인해 주세요.');
+  else if(c==='23514'||c==='22001')setStatus('너무 크거나 맞지 않는 내용이라 저장하지 못했어요.');
+  else setStatus('잠깐 연결이 불안정해요. 조금 뒤 다시 눌러 주세요.');
+}
+function setStatus(t){$('status').textContent=t}
+
+/* ---------- 방 설정 저장 ---------- */
+function clean(v){v=v||{};const o={...DEF,lanes:{}};
+  if(typeof v.title==='string')o.title=v.title.slice(0,30);
+  if(typeof v.bpm==='number'&&v.bpm>=60&&v.bpm<=150)o.bpm=v.bpm;
+  if(MOODS[v.mood])o.mood=v.mood;
+  if(['piano','xylo','musicbox','space','toy'].includes(v.inst))o.inst=v.inst;
+  if(SCALES[v.scale])o.scale=v.scale;
+  o.lock=v.lock===true;o.voiceOn=v.voiceOn===true;
+  if(v.lanes&&typeof v.lanes==='object')for(const r of ROWS)if(ANIMALS[v.lanes[r.id]])o.lanes[r.id]=v.lanes[r.id];
+  return o}
+let sBusy=Promise.resolve();
+function saveS(patch){
+  S={...S,...patch};applyS();
+  if(!live||!canWrite)return;
+  const full={...S,lanes:Object.fromEntries(ROWS.map(r=>[r.id,S.lanes[r.id]||'']))};
+  delete full.lock;delete full.voiceOn;
+  sBusy=sBusy.then(async()=>ok(await sb.from('song_rooms').update({settings:full}).eq('code',code))).catch(writeErr);
+}
+function applyS(){
+  $('bpm').value=S.bpm;$('bpmv').textContent=S.bpm;$('inst').value=S.inst;
+  if(document.activeElement!==$('title'))$('title').value=S.title;
+  qa('.mood').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mood===S.mood));
+  $('lockBtn').setAttribute('aria-pressed',S.lock);$('lockBtn').textContent=S.lock?'작곡판 잠금 풀기':'작곡판 잠그기';
+  $('voiceBtn').setAttribute('aria-pressed',S.voiceOn);$('voiceBtn').textContent=S.voiceOn?'목소리 줄 끄기':'목소리 줄 켜기';
+  $('voiceOn').hidden=!S.voiceOn;$('voiceOff').hidden=S.voiceOn;
+  paint();peerStatus();
+}
+$('bpm').addEventListener('input',e=>{S.bpm=+e.target.value;$('bpmv').textContent=S.bpm;clearTimeout(bpmT);bpmT=setTimeout(()=>saveS({bpm:S.bpm}),500)});
+$('title').addEventListener('input',()=>{clearTimeout(titleT);titleT=setTimeout(()=>saveS({title:$('title').value.slice(0,30)}),800)});
+$('inst').addEventListener('change',e=>{saveS({inst:e.target.value});sound(ROWS[2],ac().currentTime+.01,me)});
+qa('.mood').forEach(b=>b.addEventListener('click',()=>{const m=MOODS[b.dataset.mood];saveS({mood:b.dataset.mood,...m});const t=ac().currentTime+.02;[4,2,1].forEach((i,k)=>sound(ROWS[i],t+k*.14,me))}));
+
+/* ---------- 줄 맡기 / 쉬운 모드 ---------- */
+function claimLane(rid){
+  const o=S.lanes[rid];
+  if(ANIMALS[o]&&o!==me&&!teacher){setStatus(`이 줄은 ${ANIMALS[o][0]}가 맡았어요.`);return}
+  const lanes={...S.lanes};if(o===me||(teacher&&ANIMALS[o]))delete lanes[rid];else lanes[rid]=me;saveS({lanes});
+}
+$('laneBtn').addEventListener('click',()=>{laneMode=!laneMode;$('laneBtn').setAttribute('aria-pressed',laneMode);$('laneBtn').textContent=laneMode?'줄 정하기 끝':'내 줄 정하기';
+  $('hintline').textContent=laneMode?'맡고 싶은 줄의 왼쪽 글자를 눌러요. 다시 누르면 그 줄을 놓아줘요.':'칸을 누르면 내 색으로 소리가 놓이고, 다시 누르면 빠져요. 왼쪽 글자를 누르면 소리를 미리 들을 수 있어요.';paint()});
+function setEasy(v){easy=v;$('main').classList.toggle('easy',v);$('easyBtn').setAttribute('aria-pressed',v);try{const s=JSON.parse(localStorage.getItem('song-me')||'{}');s.e=v;localStorage.setItem('song-me',JSON.stringify(s))}catch(e){}}
+$('easyBtn').addEventListener('click',()=>setEasy(!easy));
+
+/* ---------- 무대 ---------- */
+function stageRender(){
+  const st=$('stage');
+  const set=new Set(peerList.map(p=>p.a));for(const a of cells.values())if(ANIMALS[a])set.add(a);if(me)set.add(me);
+  const list=[...set].filter(a=>ANIMALS[a]);
+  if(st.dataset.key!==list.join(',')){st.dataset.key=list.join(',');
+    st.innerHTML=list.map(a=>`<div class="fig" data-fa="${a}">${face(a)}<span>${ANIMALS[a][0]}${a===me?' (나)':''}</span></div>`).join('')||'<div class="empty-stage">친구들이 들어오면 무대에 나와요</div>'}
+  st.style.backgroundImage=art?`url("${art}")`:'';
+}
+function hop(a){const f=document.querySelector(`.fig[data-fa="${a}"]`);if(!f)return;f.classList.remove('hop');void f.offsetWidth;f.classList.add('hop')}
+const CHEERS={heart:'♥ 좋아',clap:'짝짝짝',best:'최고야!'};
+function floatCheer(kind,a){
+  if(!CHEERS[kind]||!ANIMALS[a])return;const st=$('stage'),el=document.createElement('div');el.className='float';
+  el.innerHTML=face(a);el.append(CHEERS[kind]);el.style.left=(10+Math.random()*60)+'%';el.style.bottom='60px';
+  st.append(el);setTimeout(()=>el.remove(),1900);
+}
+let lastCheer=0;
+qa('[data-cheer]').forEach(b=>b.addEventListener('click',()=>{
+  if(Date.now()-lastCheer<800)return;lastCheer=Date.now();const k=b.dataset.cheer;floatCheer(k,me);
+  if(chan)chan.send({type:'broadcast',event:'cheer',payload:{k,a:me}});
+}));
+
+/* ---------- 방 들어가기 ---------- */
+async function enter(){
+  code=$('code').value;
+  try{localStorage.setItem('song-me',JSON.stringify({a:me,c:code,e:easy}))}catch(e){}
+  $('join').hidden=true;$('studio').hidden=false;setEasy(easy);
+  $('roomtag').textContent='방 '+code;cells=new Map();S={...DEF,lanes:{}};lyrics=new Map();voices=new Map();art='';saves=[];canWrite=true;
+  renderPeers([]);applyS();renderLyrics();renderSaves();
+  teacher=false;tPin='';$('tLogin').hidden=false;$('tTools').hidden=true;$('teacherTab').hidden=false;
+  if(!sb){live=false;teacher=true;$('tLogin').hidden=true;$('tTools').hidden=false;setStatus('혼자 연습 모드예요. 인터넷 연결을 확인해 주세요.');applyS();return}
+  live=true;setStatus('작곡판을 불러오는 중…');
+  loadT=setTimeout(()=>setStatus('공유 작곡판에 아직 연결되지 않았어요. 인터넷을 확인해 주세요.'),10000);
+  try{
+    ok(await sb.from('song_rooms').upsert({code,settings:{}},{onConflict:'code',ignoreDuplicates:true}));
+    subscribe();await loadAll();clearTimeout(loadT);peerStatus();
+  }catch(e){clearTimeout(loadT);live=false;setStatus('공유 작곡판에 연결하지 못했어요. 혼자 연습 모드로 바뀌었어요.');return}
+  try{const pin=sessionStorage.getItem('song-pin-'+code);if(pin)tryTeacher(pin,true)}catch(e){}
+}
+const okArt=img=>typeof img==='string'&&img.length<300000&&/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(img)?img:'';
+function rowToSave(x){const d=x&&x.data||{};if(!x||typeof x.name!=='string'||!d.cells||typeof d.cells!=='object')return null;return{...d,id:x.id,name:x.name,t:Date.parse(x.created_at)||0}}
+async function loadAll(){
+  const q=[sb.from('song_rooms').select('settings').eq('code',code).maybeSingle(),sb.from('song_cells').select('id,by').eq('code',code),
+    sb.from('song_lyrics').select('animal,text').eq('code',code),sb.from('song_voices').select('animal,pcm').eq('code',code),
+    sb.from('song_art').select('img').eq('code',code).maybeSingle(),sb.from('song_saves').select('id,name,data,created_at').eq('code',code).order('created_at')];
+  const [r,c,l,v,a,sv]=(await Promise.all(q)).map(ok);
+  if(r)S=clean(r.settings);
+  cells=new Map((c||[]).filter(x=>ANIMALS[x.by]&&byId.has(x.id)).map(x=>[x.id,x.by]));
+  lyrics=new Map((l||[]).filter(x=>ANIMALS[x.animal]).map(x=>[x.animal,String(x.text||'').slice(0,40)]));
+  voices=new Map((v||[]).filter(x=>ANIMALS[x.animal]&&typeof x.pcm==='string').map(x=>[x.animal,x.pcm]));voiceCache.clear();
+  art=okArt(a&&a.img);saves=(sv||[]).map(rowToSave).filter(Boolean);
+  applyS();renderLyrics();voiceUI();renderSaves();stageRender();
+}
+async function refetchVoices(){try{const v=ok(await sb.from('song_voices').select('animal,pcm').eq('code',code));voices=new Map((v||[]).filter(x=>ANIMALS[x.animal]&&typeof x.pcm==='string').map(x=>[x.animal,x.pcm]));voiceCache.clear();voiceUI()}catch(e){}}
+async function refetchArt(){try{const a=ok(await sb.from('song_art').select('img').eq('code',code).maybeSingle());art=okArt(a&&a.img);stageRender()}catch(e){}}
+async function loadLogs(){try{const rows=ok(await sb.from('song_logs').select('animal,day,ev').eq('code',code));logs=(rows||[]).filter(x=>ANIMALS[x.animal]&&Array.isArray(x.ev)).map(x=>({a:x.animal,ev:x.ev}));renderLog()}catch(e){}}
+function cellEv(n){if(n&&n.code===code&&ANIMALS[n.by]&&byId.has(n.id)){cells.set(n.id,n.by);paint()}}
+function subscribe(){
+  const f='code=eq.'+code,key=Math.random().toString(36).slice(2),pc=(ev,table,flt,fn)=>chan.on('postgres_changes',flt?{event:ev,schema:'public',table,filter:f}:{event:ev,schema:'public',table},fn);
+  chan=sb.channel('song-'+code,{config:{presence:{key},broadcast:{self:false}}});
+  pc('INSERT','song_cells',1,p=>cellEv(p.new));pc('UPDATE','song_cells',1,p=>cellEv(p.new));
+  pc('DELETE','song_cells',0,p=>{const o=p.old||{};if(o.code===code&&cells.has(o.id)){cells.delete(o.id);paint()}});
+  pc('*','song_rooms',1,p=>{if(p.new&&p.new.settings){S=clean(p.new.settings);applyS()}});
+  pc('*','song_lyrics',1,p=>{const n=p.new;if(n&&ANIMALS[n.animal]){lyrics.set(n.animal,String(n.text||'').slice(0,40));renderLyrics()}});
+  pc('*','song_voices',1,()=>refetchVoices());pc('DELETE','song_voices',0,p=>{if(p.old&&p.old.code===code)refetchVoices()});
+  pc('*','song_art',1,()=>refetchArt());
+  pc('INSERT','song_saves',1,p=>{const v=rowToSave(p.new);if(v&&!saves.some(x=>x.id===v.id)){saves.push(v);renderSaves()}});
+  pc('*','song_logs',1,()=>{if(teacher)loadLogs()});
+  chan.on('broadcast',{event:'play'},()=>start()).on('broadcast',{event:'stop'},()=>stop())
+    .on('broadcast',{event:'cheer'},m=>{const d=m&&m.payload;if(d)floatCheer(d.k,d.a)})
+    .on('broadcast',{event:'key'},m=>{const d=m&&m.payload;if(d&&Number.isInteger(d.m)&&d.m>=24&&d.m<=108&&ANIMALS[d.a])pkey(d.m,d.a,false)})
+    .on('presence',{event:'sync'},()=>{const st=chan.presenceState(),list=[];for(const k in st)for(const m of st[k])list.push({peer:k,presence:m,isMe:k===key,sameTab:k===key});renderPeers(list)})
+    .subscribe(async status=>{if(status==='SUBSCRIBED'){try{await chan.track({animal:me,feel})}catch(e){}}else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')setStatus('실시간 연결이 불안정해요. 잠시 뒤 새로고침해 주세요.')});
+  const c=chan;unsubs.push(()=>sb.removeChannel(c));
+}
+async function tryTeacher(pin,silent){
+  if(!/^\d{4,8}$/.test(pin)){if(!silent)setStatus('선생님 PIN은 숫자 4~8자리예요.');return}
+  try{const r=ok(await sb.rpc('song_teacher_login',{c:code,pin}));
+    if(r===true){teacher=true;tPin=pin;try{sessionStorage.setItem('song-pin-'+code,pin)}catch(e){}$('tLogin').hidden=true;$('tTools').hidden=false;loadLogs();paint();if(!silent)setStatus('선생님 모드가 켜졌어요.')}
+    else if(!silent)setStatus('PIN이 맞지 않아요.')}catch(e){if(!silent)setStatus('PIN을 확인하지 못했어요. 다시 시도해 주세요.')}
+}
+async function teacherSet(p){
+  if(!live){S={...S,...p};applyS();return}
+  if(!teacher)return;
+  try{const r=ok(await sb.rpc('song_teacher_set',{c:code,pin:tPin,patch:p}));if(r===true){S={...S,...p};applyS()}else setStatus('선생님 PIN을 다시 확인해 주세요.')}catch(e){setStatus('설정을 바꾸지 못했어요. 다시 시도해 주세요.')}
+}
+function renderPeers(list){
+  const out=[],seen=new Set();
+  for(const p of list){const pr=p.isMe&&p.sameTab?{animal:me,feel}:(p.presence||{});if(!ANIMALS[pr.animal]||seen.has(p.peer))continue;seen.add(p.peer);out.push({a:pr.animal,f:FEELS[pr.feel]?pr.feel:null})}
+  if(!out.some(p=>p.a===me)&&me)out.unshift({a:me,f:feel});
+  peerList=out;
+  $('peers').innerHTML=out.map(p=>`<span class="peer" style="border-color:${p.f?FEELS[p.f][1]:'#fff'}" title="${ANIMALS[p.a][0]}${p.f?' · '+FEELS[p.f][0]:''}">${face(p.a)}</span>`).join('');
+  stageRender();peerStatus();renderLyrics();
+}
+function peerStatus(){if(!live)return;const n=peerList.length;setStatus(S.lock?'선생님이 작곡판을 잠깐 멈췄어요. 들어 보기는 할 수 있어요.':n>1?`지금 ${n}명이 함께 만들고 있어요. 친구가 찍은 소리가 바로 보여요.`:'연결됐어요. 친구가 같은 방 번호로 들어오면 함께 만들 수 있어요.')}
+$('leave').addEventListener('click',async()=>{
+  stop();unsubs.forEach(u=>{try{u()}catch(e){}});unsubs=[];clearTimeout(loadT);flushLog();
+  chan=null;teacher=false;tPin='';
+  laneMode=false;$('studio').hidden=true;$('join').hidden=false;
+});
+
+/* ---------- 탭 ---------- */
+qa('[role=tab]').forEach(t=>t.addEventListener('click',()=>{qa('[role=tab]').forEach(x=>x.setAttribute('aria-selected',x===t));qa('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==t.dataset.tab);if(t.dataset.tab==='art')padInit()}));
+
+/* ---------- 가사판 ---------- */
+function renderLyrics(){
+  const box=$('lyrics'),order=[...new Set([me,...peerList.map(p=>p.a),...lyrics.keys()])].filter(a=>ANIMALS[a]);
+  const active=document.activeElement&&document.activeElement.id==='myLyric';
+  if(active){for(const div of qa('[data-la]',box)){const a=div.dataset.la;if(a!==me){const s=div.querySelector('span');if(s)s.textContent=lyrics.get(a)||'(아직 쓰는 중)'}}return}
+  box.innerHTML='';
+  for(const a of order){const d=document.createElement('div');d.dataset.la=a;d.innerHTML=face(a);
+    if(a===me){const i=document.createElement('input');i.id='myLyric';i.maxLength=40;i.placeholder='내가 쓰는 한 줄 (예: 기차를 타고 바다에 가고 싶어)';i.value=lyrics.get(a)||'';
+      i.addEventListener('input',()=>{clearTimeout(lyrT);lyrT=setTimeout(()=>saveLyric(i.value),800)});d.append(i)}
+    else{const s=document.createElement('span');s.textContent=lyrics.get(a)||'(아직 쓰는 중)';d.append(s)}
+    box.append(d)}
+}
+async function saveLyric(t){t=t.slice(0,40);lyrics.set(me,t);if(!live||!canWrite)return;try{ok(await sb.from('song_lyrics').upsert({code,animal:me,text:t}))}catch(e){writeErr(e)}}
+
+/* ---------- 그림판 ---------- */
+const pad=$('pad'),px=pad.getContext('2d');let padReady=false,brush={c:'#1d1b2e',w:10,er:false},drawing=false,last=null;
+const COLORS=['#1d1b2e','#ff5a4e','#ff8418','#ffc93c','#2fb36d','#3482ff','#8b5cf6','#ff6fae','#a8703f'];
+$('swatches').innerHTML=COLORS.map(c=>`<button class="swatch" data-c="${c}" style="background:${c}" aria-label="색 ${c}" aria-pressed="${c===brush.c}"></button>`).join('');
+function padInit(){if(padReady)return;padReady=true;px.fillStyle='#fff';px.fillRect(0,0,640,360);
+  if(art){const im=new Image();im.onload=()=>px.drawImage(im,0,0,640,360);im.src=art}}
+$('swatches').addEventListener('click',e=>{const b=e.target.closest('.swatch');if(!b)return;brush.c=b.dataset.c;brush.er=false;$('eraser').setAttribute('aria-pressed',false);qa('.swatch').forEach(x=>x.setAttribute('aria-pressed',x===b))});
+const pw=(id,w)=>$(id).addEventListener('click',()=>{brush.w=w;$('thin').setAttribute('aria-pressed',w===4);$('thick').setAttribute('aria-pressed',w===10)});pw('thin',4);pw('thick',10);
+$('eraser').addEventListener('click',()=>{brush.er=!brush.er;$('eraser').setAttribute('aria-pressed',brush.er)});
+$('padClear').addEventListener('click',()=>{px.fillStyle='#fff';px.fillRect(0,0,640,360)});
+const pos=e=>{const r=pad.getBoundingClientRect();return[(e.clientX-r.left)*640/r.width,(e.clientY-r.top)*360/r.height]};
+pad.addEventListener('pointerdown',e=>{padInit();drawing=true;last=pos(e);pad.setPointerCapture(e.pointerId);dot(last,last,e)});
+pad.addEventListener('pointermove',e=>{if(!drawing)return;const p=pos(e);dot(last,p,e);last=p});
+['pointerup','pointercancel','pointerleave'].forEach(t=>pad.addEventListener(t,()=>drawing=false));
+function dot(a,b,e){px.strokeStyle=brush.er?'#fff':brush.c;px.lineWidth=(brush.er?brush.w*2.5:brush.w)*(e.pressure&&e.pointerType==='pen'?.5+e.pressure:1);px.lineCap=px.lineJoin='round';px.beginPath();px.moveTo(a[0],a[1]);px.lineTo(b[0],b[1]);px.stroke()}
+$('hang').addEventListener('click',async()=>{
+  const img=pad.toDataURL('image/jpeg',.72);art=img;stageRender();
+  if(!live||!canWrite){setStatus('무대에 그림을 걸었어요.');return}
+  try{ok(await sb.from('song_art').upsert({code,img,by:me}));setStatus('무대에 그림을 걸었어요. 친구들 화면에도 보여요.')}catch(e){writeErr(e)}
+});
+
+/* ---------- 목소리 ---------- */
+const voiceCache=new Map();
+function voiceUI(){const has=voices.has(me),ok=$('consent').checked&&canWrite;$('rec').disabled=!ok;$('recLabel').style.opacity=ok?1:.45;$('micRec').disabled=!ok;$('voiceTry').disabled=!has;$('voiceDel').disabled=!has||!canWrite}
+$('consent').addEventListener('change',voiceUI);
+$('rec').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(f)processVoice(f)});
+$('micRec').addEventListener('click',async()=>{
+  const b=$('micRec');if(b.dataset.rec)return;
+  try{const st=await navigator.mediaDevices.getUserMedia({audio:true}),mr=new MediaRecorder(st),ch=[];
+    mr.ondataavailable=e=>{if(e.data&&e.data.size)ch.push(e.data)};
+    mr.onstop=()=>{st.getTracks().forEach(t=>t.stop());delete b.dataset.rec;b.textContent='● 바로 녹음 (3초)';processVoice(new Blob(ch,{type:mr.mimeType||'audio/webm'}))};
+    mr.start();b.dataset.rec='1';b.textContent='녹음 중… 말해 보세요';setTimeout(()=>{if(mr.state!=='inactive')mr.stop()},3000);
+  }catch(e){setStatus('마이크를 쓸 수 없어요. 태블릿 설정에서 이 사이트의 마이크 권한을 허용해 주세요.')}
+});
+async function processVoice(f){
+  if(f.size>15e6){setStatus('녹음 파일이 너무 커요. 짧게 다시 녹음해 주세요.');return}
+  try{
+    setStatus('목소리를 다듬는 중…');
+    const src=await ac().decodeAudioData(await f.arrayBuffer());
+    const ch=src.getChannelData(0);let st=0;while(st<ch.length&&Math.abs(ch[st])<.03)st++;
+    const s0=Math.max(0,st/src.sampleRate-.02),dur=Math.min(1.2,src.duration-s0);
+    if(dur<.15){setStatus('소리가 잘 안 들려요. 조금 더 크게 다시 녹음해 볼까요?');return}
+    const oc=new OfflineAudioContext(1,Math.ceil(16000*dur),16000),b=oc.createBufferSource();b.buffer=src;b.connect(oc.destination);b.start(0,s0,dur);
+    const d=(await oc.startRendering()).getChannelData(0);let pk=0;for(let i=0;i<d.length;i++)pk=Math.max(pk,Math.abs(d[i]));
+    const k=pk>0?.9/pk:1,fade=800,i16=new Int16Array(d.length);
+    for(let i=0;i<d.length;i++){let v=d[i]*k;const r=d.length-i;if(r<fade)v*=r/fade;i16[i]=Math.max(-1,Math.min(1,v))*32767}
+    const u8=new Uint8Array(i16.buffer);let bin='';for(let i=0;i<u8.length;i+=8192)bin+=String.fromCharCode.apply(null,u8.subarray(i,i+8192));
+    const pcm=btoa(bin);voices.set(me,pcm);voiceCache.delete(me);voiceUI();
+    sound(ROWS.find(r=>r.id==='vo'),ac().currentTime+.02,me);
+    if(live)ok(await sb.from('song_voices').upsert({code,animal:me,pcm}));
+    setStatus('내 목소리를 넣었어요. 목소리 줄에 칸을 찍어 보세요.');
+  }catch(err){if(err&&err.code)writeErr(err);else setStatus('이 녹음 파일은 열 수 없어요. 다시 녹음해 주세요.')}
+}
+$('voiceTry').addEventListener('click',()=>sound(ROWS.find(r=>r.id==='vo'),ac().currentTime+.02,me));
+$('voiceDel').addEventListener('click',async()=>{voices.delete(me);voiceCache.delete(me);voiceUI();if(live){try{ok(await sb.from('song_voices').delete().eq('code',code).eq('animal',me))}catch(e){writeErr(e)}}setStatus('내 목소리를 지웠어요.')});
+function voiceBuf(a){
+  const pcm=voices.get(a);if(!pcm||!C)return null;const hit=voiceCache.get(a);if(hit&&hit.c===C)return hit.b;
+  try{const bin=atob(pcm),n=bin.length>>1,b=C.createBuffer(1,n,16000),d=b.getChannelData(0);
+    for(let i=0;i<n;i++){let v=bin.charCodeAt(2*i)|(bin.charCodeAt(2*i+1)<<8);if(v>32767)v-=65536;d[i]=v/32768}
+    voiceCache.set(a,{c:C,b});return b}catch(e){return null}
+}
+
+/* ---------- 도구 ---------- */
+async function setMany(list){ // list of [id, animal|null]
+  for(const [id,a] of list){if(a)cells.set(id,a);else cells.delete(id);logIt(a?'+':'-',id)}paint();
+  if(!live||!canWrite)return;
+  const ups=list.filter(x=>x[1]).map(([id,a])=>({code,id,by:a})),dels=list.filter(x=>!x[1]).map(x=>x[0]);
+  try{if(dels.length)ok(await sb.from('song_cells').delete().eq('code',code).in('id',dels));if(ups.length)ok(await sb.from('song_cells').upsert(ups))}catch(e){writeErr(e)}
+}
+$('starter').addEventListener('click',()=>{if(S.lock&&!teacher)return;const ids=[];for(let s=0;s<STEPS;s++){if(s%4===0)ids.push('kk-'+s);if(s%8===4)ids.push('cl-'+s);if(s%2===0)ids.push('hh-'+s)}setMany(ids.filter(i=>!cells.has(i)&&canPlace(i.split('-')[0])).map(i=>[i,me]))});
+$('mine').addEventListener('click',()=>setMany([...cells].filter(([,a])=>a===me).map(([i])=>[i,null])));
+function armed(btn,label,fn){btn.addEventListener('click',()=>{if(!btn.classList.contains('armed')){btn.classList.add('armed');btn.dataset.l=btn.textContent;btn.textContent=label;clearTimeout(btn._t);btn._t=setTimeout(()=>{btn.classList.remove('armed');btn.textContent=btn.dataset.l},3000);return}clearTimeout(btn._t);btn.classList.remove('armed');btn.textContent=btn.dataset.l;fn()})}
+armed($('all'),'정말 다 지울까요? 한 번 더',()=>{if(S.lock&&!teacher)return;setMany([...cells.keys()].map(i=>[i,null]))});
+
+/* ---------- 회차 저장 ---------- */
+function renderSaves(){
+  const box=$('saves');box.innerHTML='';$('saveName').placeholder=`예: ${saves.length+1}회차`;
+  if(!saves.length){box.innerHTML='<p class="note">아직 저장한 곡이 없어요. 수업이 끝날 때마다 저장해 두면 다음 시간에 이어서 할 수 있어요.</p>';return}
+  for(const s of saves){const d=document.createElement('div'),b=document.createElement('b'),sm=document.createElement('small'),btn=document.createElement('button');
+    b.textContent=s.name.slice(0,20);const n=Object.keys(s.cells).length;sm.textContent=`소리 ${n}개${typeof s.title==='string'&&s.title?' · '+s.title.slice(0,30):''}${s.t?' · '+new Date(s.t).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}):''}`;
+    btn.textContent='불러오기';armed(btn,'지금 곡 대신 불러올까요?',()=>restore(s));d.append(b,sm,btn);box.append(d)}
+}
+$('saveNow').addEventListener('click',async()=>{
+  const name=($('saveName').value.trim()||`${saves.length+1}회차`).slice(0,20);
+  const obj=Object.fromEntries([...cells].filter(([,a])=>ANIMALS[a]));
+  const rec={name,cells:obj,title:S.title,bpm:S.bpm,inst:S.inst,scale:S.scale,mood:S.mood,t:Date.now(),by:me};
+  $('saveName').value='';
+  if(!live){saves.push({id:'local'+Date.now(),...rec});renderSaves();setStatus(`'${name}'로 저장했어요. (혼자 모드라 이 화면에서만 보여요)`);return}
+  try{const {name:_n,t:_t,...data}=rec;const row=ok(await sb.from('song_saves').insert({code,name,data}).select().single());const v=rowToSave(row);if(v&&!saves.some(x=>x.id===v.id)){saves.push(v);renderSaves()}setStatus(`'${name}'로 저장했어요.`)}catch(e){writeErr(e)}
+});
+async function restore(s){
+  if(S.lock&&!teacher){setStatus('선생님이 작곡판을 잠깐 멈췄어요.');return}
+  const want=new Map(Object.entries(s.cells).filter(([id,a])=>byId.has(id)&&ANIMALS[a])),ops=[];
+  for(const id of cells.keys())if(!want.has(id))ops.push([id,null]);
+  for(const [id,a] of want)if(cells.get(id)!==a)ops.push([id,a]);
+  const p={};if(typeof s.title==='string')p.title=s.title.slice(0,30);if(typeof s.bpm==='number'&&s.bpm>=60&&s.bpm<=150)p.bpm=s.bpm;if(SCALES[s.scale])p.scale=s.scale;if(['piano','xylo','musicbox','space','toy'].includes(s.inst))p.inst=s.inst;if(MOODS[s.mood])p.mood=s.mood;
+  saveS(p);setStatus(`'${s.name.slice(0,20)}'를 불러오는 중…`);await setMany(ops);setStatus(`'${s.name.slice(0,20)}'를 불러왔어요.`);
+}
+
+/* ---------- 활동 기록 ---------- */
+function logIt(op,id){myLog.push([Date.now(),op,id]);if(myLog.length>400)myLog.splice(0,myLog.length-400);clearTimeout(logT);logT=setTimeout(flushLog,4000)}
+async function flushLog(){clearTimeout(logT);if(!live||!canWrite||!myLog.length)return;
+  const d=new Date(),ymd=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  try{const cur=ok(await sb.from('song_logs').select('ev').eq('code',code).eq('day',ymd).eq('animal',me).maybeSingle());const prev=cur&&Array.isArray(cur.ev)?cur.ev:[];const seen=new Set(prev.map(e=>e[0]+e[2]));
+    const ev=prev.concat(myLog.filter(e=>!seen.has(e[0]+e[2]))).slice(-400);ok(await sb.from('song_logs').upsert({code,day:ymd,animal:me,ev}))}catch(e){}
+}
+function renderLog(){
+  const agg={};for(const l of logs){const o=agg[l.a]||(agg[l.a]={p:0,m:0,t:0});for(const e of l.ev){if(!Array.isArray(e))continue;if(e[1]==='+')o.p++;else if(e[1]==='-')o.m++;if(typeof e[0]==='number')o.t=Math.max(o.t,e[0])}}
+  const tb=$('logBody');tb.innerHTML='';const ks=Object.keys(agg);
+  if(!ks.length){tb.innerHTML='<tr><td colspan="4">아직 기록이 없어요.</td></tr>';return}
+  for(const a of ks){const tr=document.createElement('tr');const o=agg[a];[ANIMALS[a][0],o.p,o.m,o.t?new Date(o.t).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}):'-'].forEach((v,i)=>{const td=document.createElement('td');td.textContent=v;if(i===1||i===2)td.className='n';tr.append(td)});tb.append(tr)}
+}
+
+/* ---------- 소리 ---------- */
+let ctx=null,noise=null,C=null,NZ=null,rendering=false;
+function mkNoise(c){const b=c.createBuffer(1,Math.floor(c.sampleRate*.5),c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;return b}
+function ac(){if(!ctx){ctx=new (window.AudioContext||window.webkitAudioContext)();noise=mkNoise(ctx)}if(ctx.state==='suspended')ctx.resume();if(!rendering){C=ctx;NZ=noise}return ctx}
+function env(t,peak,dur,att=.008){const g=C.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+att);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);g.connect(C.destination);return g}
+function tone(f,t,dur,type,peak,att){const o=C.createOscillator();o.type=type;o.frequency.setValueAtTime(f,t);o.connect(env(t,peak,dur,att));o.start(t);o.stop(t+dur+.02)}
+function hiss(t,dur,ft,ff,peak){const s=C.createBufferSource();s.buffer=NZ;const f=C.createBiquadFilter();f.type=ft;f.frequency.value=ff;s.connect(f);f.connect(env(t,peak,dur));s.start(t);s.stop(t+dur+.02)}
+function pad2(f,t,peak){const o=C.createOscillator(),lp=C.createBiquadFilter();o.type='sawtooth';o.frequency.setValueAtTime(f,t);lp.type='lowpass';lp.frequency.value=1400;o.connect(lp);lp.connect(env(t,peak,.9,.07));o.start(t);o.stop(t+.95)}
+function mel(f,t){
+  switch(S.inst){
+    case 'xylo':tone(f,t,.3,'sine',.34);tone(f*4,t,.07,'sine',.08);break;
+    case 'musicbox':tone(f*2,t,1,'sine',.17);tone(f*6,t,.18,'sine',.03);break;
+    case 'space':pad2(f,t,.12);pad2(f,t+.27,.05);tone(f*2,t+.54,.4,'sine',.03);break;
+    case 'toy':tone(f,t,.16,'square',.09);break;
+    default:tone(f,t,.6,'triangle',.26);tone(f*2,t,.3,'sine',.07);
+  }}
+function sound(r,t,a){if(!r)return;if(!rendering)ac();
+  if(r.k==='mel')mel(SCALES[S.scale].f[r.i],t);
+  else if(r.k==='bass')tone(r.f,t,.35,'triangle',.45);
+  else if(r.k==='kick'){const o=C.createOscillator();o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(45,t+.14);o.connect(env(t,.9,.22));o.start(t);o.stop(t+.25)}
+  else if(r.k==='clap')hiss(t,.14,'bandpass',1600,.5);
+  else if(r.k==='hat')hiss(t,.05,'highpass',7000,.22);
+  else if(r.k==='voice'){const b=voiceBuf(a);if(b){const s=C.createBufferSource(),gn=C.createGain();gn.gain.value=.9;s.buffer=b;s.connect(gn);gn.connect(C.destination);s.start(t)}else tone(1046.5,t,.12,'sine',.08)}}
+
+let playing=false,timer=0,nextT=0,step=0,queue=[],raf=0,lastNow=-1;
+const loopLen=()=>easy?8:STEPS;
+function sched(){while(nextT<ctx.currentTime+.12){for(const r of ROWS){if(r.id==='vo'&&!S.voiceOn)continue;const a=cells.get(r.id+'-'+step);if(ANIMALS[a])sound(r,nextT,a)}queue.push([step,nextT]);nextT+=60/S.bpm/4;step=(step+1)%loopLen()}}
+function draw(){let cur=lastNow;while(queue.length&&queue[0][1]<=ctx.currentTime)cur=queue.shift()[0];
+  if(cur!==lastNow){for(const el of cellEls)el.classList.toggle('now',+el.dataset.s===cur);lastNow=cur;
+    const who=new Set();for(const r of ROWS){const a=cells.get(r.id+'-'+cur);if(ANIMALS[a]&&(r.id!=='vo'||S.voiceOn))who.add(a)}who.forEach(hop)}
+  raf=requestAnimationFrame(draw)}
+function start(){if(playing)stop();ac();playing=true;step=0;queue=[];nextT=ctx.currentTime+.06;timer=setInterval(sched,25);sched();raf=requestAnimationFrame(draw);$('play').textContent='■ 멈추기'}
+function stop(){playing=false;clearInterval(timer);cancelAnimationFrame(raf);lastNow=-1;cellEls.forEach(el=>el.classList.remove('now'));$('play').textContent='▶ 듣기'}
+$('play').addEventListener('click',()=>playing?stop():start());
+$('together').addEventListener('click',()=>{
+  if(playing){stop();if(chan)chan.send({type:'broadcast',event:'stop',payload:{}});return}
+  start();if(chan){chan.send({type:'broadcast',event:'play',payload:{}});setStatus('모두의 태블릿에서 함께 재생해요.')}
+});
+
+/* ---------- 선생님 ---------- */
+$('lockBtn').addEventListener('click',()=>teacherSet({lock:!S.lock}));
+$('voiceBtn').addEventListener('click',()=>teacherSet({voiceOn:!S.voiceOn}));
+$('tGo').addEventListener('click',()=>tryTeacher($('tPin').value.trim(),false));
+$('lanesFree').addEventListener('click',()=>{if(teacher)saveS({lanes:{}})});
+$('tEasy').addEventListener('click',()=>{$('tEasyNote').hidden=!$('tEasyNote').hidden});
+
+/* ---------- 내려받기 ---------- */
+const downloads={save:async({filename,data})=>{const blob=data instanceof Blob?data:new Blob([data]),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000);return{status:'saved'}}};
+function renderWav(reps){
+  const stepDur=60/S.bpm/4;
+  return renderOffline(STEPS*reps*stepDur+1.2,()=>{for(let i=0;i<STEPS*reps;i++){const s=i%STEPS,t=.05+i*stepDur;for(const r of ROWS){if(r.id==='vo'&&!S.voiceOn)continue;const a=cells.get(r.id+'-'+s);if(ANIMALS[a])sound(r,t,a)}}});
+}
+async function renderOffline(len,schedule){
+  const sr=44100,oc=new OfflineAudioContext(2,Math.ceil(sr*len),sr);
+  rendering=true;C=oc;NZ=mkNoise(oc);
+  try{schedule()}finally{rendering=false;C=ctx;NZ=noise}
+  const buf=await oc.startRendering(),L=buf.getChannelData(0),R=buf.getChannelData(1),n=L.length;
+  let peak=0;for(let i=0;i<n;i++)peak=Math.max(peak,Math.abs(L[i]),Math.abs(R[i]));
+  const k=peak>.95?.95/peak:1,out=new DataView(new ArrayBuffer(44+n*4)),w=(o,s)=>{for(let i=0;i<s.length;i++)out.setUint8(o+i,s.charCodeAt(i))};
+  w(0,'RIFF');out.setUint32(4,36+n*4,true);w(8,'WAVEfmt ');out.setUint32(16,16,true);out.setUint16(20,1,true);out.setUint16(22,2,true);
+  out.setUint32(24,sr,true);out.setUint32(28,sr*4,true);out.setUint16(32,4,true);out.setUint16(34,16,true);w(36,'data');out.setUint32(40,n*4,true);
+  for(let i=0,o=44;i<n;i++,o+=4){out.setInt16(o,Math.max(-1,Math.min(1,L[i]*k))*32767,true);out.setInt16(o+2,Math.max(-1,Math.min(1,R[i]*k))*32767,true)}
+  return new Uint8Array(out.buffer);
+}
+const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRC[(c^b[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0}
+function zip1(name,data){
+  const nm=new TextEncoder().encode(name),crc=crc32(data),lh=new DataView(new ArrayBuffer(30)),ch=new DataView(new ArrayBuffer(46)),ed=new DataView(new ArrayBuffer(22));
+  lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);lh.setUint32(14,crc,true);lh.setUint32(18,data.length,true);lh.setUint32(22,data.length,true);lh.setUint16(26,nm.length,true);
+  ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);ch.setUint32(16,crc,true);ch.setUint32(20,data.length,true);ch.setUint32(24,data.length,true);ch.setUint16(28,nm.length,true);
+  ed.setUint32(0,0x06054b50,true);ed.setUint16(8,1,true);ed.setUint16(10,1,true);ed.setUint32(12,46+nm.length,true);ed.setUint32(16,30+nm.length+data.length,true);
+  return new Blob([lh,nm,data,ch,nm,ed]);
+}
+const baseName=()=>($('title').value.trim()||'우리노래').replace(/[\\/:*?"<>|\u0000-\u001f]/g,'').slice(0,30)||'우리노래';
+function dlErr(err){const c=err&&err.code;setStatus(c==='declined'?'내려받기를 취소했어요.':c==='rate_limited'?'잠시 뒤 다시 눌러 주세요.':c==='host_unavailable'?'이 앱에서는 파일을 저장할 수 없어요. 브라우저나 컴퓨터에서 열어 주세요.':'내려받기에 실패했어요. 다시 시도해 주세요.')}
+async function busy(btn,label,fn){if(btn.disabled)return;const t=btn.textContent;btn.disabled=true;btn.textContent=label;try{await fn()}catch(e){dlErr(e)}finally{btn.disabled=false;btn.textContent=t}}
+$('dl').addEventListener('click',e=>busy(e.currentTarget,'곡 만드는 중…',async()=>{
+  if(!downloads)return;if(![...cells.values()].some(a=>ANIMALS[a])){setStatus('아직 찍은 소리가 없어요. 칸을 눌러 소리를 놓아 주세요.');return}
+  if(playing)stop();const wav=await renderWav(+$('reps').value);
+  await downloads.save({filename:baseName()+'.wav',data:new Blob([wav],{type:'audio/wav'})});setStatus('곡을 WAV 파일로 내려받았어요.')}));
+$('cover').addEventListener('click',e=>busy(e.currentTarget,'표지 만드는 중…',async()=>{
+  if(!downloads)return;
+  const cv=document.createElement('canvas');cv.width=cv.height=1080;const x=cv.getContext('2d');
+  try{await document.fonts.load('96px Jua')}catch(e){}
+  if(art){const im=new Image();await new Promise((ok,no)=>{im.onload=ok;im.onerror=no;im.src=art});const s=Math.max(1080/im.width,700/im.height);x.fillStyle='#fff';x.fillRect(0,0,1080,1080);x.drawImage(im,(1080-im.width*s)/2,0,im.width*s,im.height*s)}
+  else{const gr=x.createLinearGradient(0,0,0,700);gr.addColorStop(0,'#ffe8a3');gr.addColorStop(1,'#ffb4a8');x.fillStyle=gr;x.fillRect(0,0,1080,700)}
+  x.fillStyle='rgba(0,0,0,.28)';x.fillRect(0,0,1080,700);
+  x.fillStyle='#ff5a4e';x.fillRect(0,700,1080,380);
+  const title=$('title').value.trim()||'우리 노래';let fs=110;x.font=`${fs}px Jua, sans-serif`;while(x.measureText(title).width>960&&fs>48){fs-=6;x.font=`${fs}px Jua, sans-serif`}
+  x.fillStyle='#fff';x.textAlign='center';x.shadowColor='rgba(0,0,0,.35)';x.shadowBlur=12;x.fillText(title,540,190);x.shadowBlur=0;
+  const who=[...new Set([...cells.values()].filter(a=>ANIMALS[a]))];if(!who.length&&me)who.push(me);
+  const sz=Math.min(150,900/Math.max(who.length,1));
+  for(let i=0;i<who.length;i++){const im=new Image();await new Promise(ok=>{im.onload=ok;im.onerror=ok;im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(face(who[i]).replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" '))});
+    const cx=540+(i-(who.length-1)/2)*(sz+16);x.drawImage(im,cx-sz/2,600-sz,sz,sz);x.font='34px Jua, sans-serif';x.fillStyle='#fff';x.fillText(ANIMALS[who[i]][0],cx,650)}
+  const rows=ROWS.filter(r=>r.id!=='vo'||S.voiceOn),cw=56,chh=Math.min(26,250/rows.length),gx=(1080-cw*STEPS)/2;
+  rows.forEach((r,ri)=>{for(let s=0;s<STEPS;s++){const a=cells.get(r.id+'-'+s);x.fillStyle=ANIMALS[a]?ANIMALS[a][1]:'rgba(255,255,255,.22)';x.fillRect(gx+s*cw+3,730+ri*chh+2,cw-6,chh-4)}});
+  const d=new Date();x.font='36px "Gowun Dodum", sans-serif';x.fillStyle='#fff';x.fillText(`함께 만든 노래 · ${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}`,540,1040);
+  const blob=await new Promise(ok=>cv.toBlob(ok,'image/png'));
+  await downloads.save({filename:baseName()+'_앨범표지.png',data:blob});setStatus('앨범 표지를 내려받았어요.')}));
+$('csv').addEventListener('click',e=>busy(e.currentTarget,'기록 정리 중…',async()=>{
+  if(!downloads)return;await flushLog();
+  const rows=[['날짜시간','친구','동작','줄','칸']];const nm=Object.fromEntries(ROWS.map(r=>[r.id,r.k==='mel'?SCALES.major.n[r.i]:r.n]));
+  for(const l of logs)for(const ev of l.ev){if(!Array.isArray(ev))continue;const [rid,s]=String(ev[2]).split('-');rows.push([new Date(ev[0]).toLocaleString('ko-KR'),ANIMALS[l.a][0],ev[1]==='+'?'놓음':'뺌',nm[rid]||rid,+s+1])}
+  rows.sort((a,b)=>a===rows[0]?-1:b===rows[0]?1:0);
+  const csv='﻿'+rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  await downloads.save({filename:`창작기록_방${code}.csv`,data:csv});setStatus('창작 기록을 내려받았어요.')}));
+/* ---------- 함께 피아노 ---------- */
+const NAMES=['도','','레','','미','파','','솔','','라','','시'],BLACK=[1,3,6,8,10];
+let oct=4,keyEls=new Map(),trail=[],trailRaf=0;
+const prec={on:false,t0:0,ev:[]};
+const mf=m=>440*Math.pow(2,(m-69)/12);
+function buildKeys(){
+  const box=$('keys'),start=12*(oct+1),span=easy?1:2,wh=[],bl=[];
+  for(let m=start;m<=start+12*span;m++)(BLACK.includes(m%12)?bl:wh).push(m);
+  const W=100/wh.length;let h='';
+  wh.forEach((m,i)=>h+=`<div class="wk" data-m="${m}" style="left:${i*W}%;width:${W}%">${NAMES[m%12]}${m%12===0?'<small style="font-size:11px;margin-left:2px">'+(m/12-1)+'</small>':''}</div>`);
+  bl.forEach(m=>{const i=wh.indexOf(m-1);h+=`<div class="bk" data-m="${m}" style="left:${(i+1)*W-W*.31}%;width:${W*.62}%"></div>`});
+  box.innerHTML=h;keyEls=new Map(qa('[data-m]',box).map(e=>[+e.dataset.m,e]));
+}
+function flash(m,a){const el=keyEls.get(m);if(!el)return;el.style.background=ANIMALS[a][1];el.classList.add('down');clearTimeout(el._t);el._t=setTimeout(()=>{el.style.background='';el.classList.remove('down')},220)}
+function spawnTrail(m,a){
+  const el=keyEls.get(m),box=$('keys');let x,w;
+  if(el){const r=el.getBoundingClientRect(),b=box.getBoundingClientRect();x=r.left-b.left+r.width*.15;w=r.width*.7}
+  else{const b=box.getBoundingClientRect();x=Math.max(0,Math.min(1,(m-48)/48))*b.width;w=10}
+  trail.push({x,w,c:ANIMALS[a][1],t:performance.now()});if(!trailRaf)trailRaf=requestAnimationFrame(drawTrail);
+}
+function drawTrail(){
+  const cv=$('trail'),dpr=window.devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;
+  if(cv.width!==Math.round(W*dpr)){cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr)}
+  const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,W,H);const now=performance.now();
+  trail=trail.filter(o=>now-o.t<H/.07);
+  for(const o of trail){const age=now-o.t,y=H-8-age*.07;x.globalAlpha=Math.max(0,1-age/(H/.07));x.fillStyle=o.c;x.fillRect(o.x,y,o.w,7)}
+  x.globalAlpha=1;trailRaf=trail.length?requestAnimationFrame(drawTrail):0;
+}
+function pkey(m,a,local){
+  if(!ANIMALS[a])return;const t=ac().currentTime+.005;mel(mf(m),t);flash(m,a);spawnTrail(m,a);hop(a);
+  if(prec.on)prec.ev.push([performance.now()-prec.t0,m,a]);
+  if(local&&chan)chan.send({type:'broadcast',event:'key',payload:{m,a}});
+}
+const held=new Map();
+$('keys').addEventListener('pointerdown',e=>{const k=e.target.closest('[data-m]');if(!k)return;e.preventDefault();held.set(e.pointerId,k);pkey(+k.dataset.m,me,true)});
+$('keys').addEventListener('pointermove',e=>{if(!held.has(e.pointerId))return;const el=document.elementFromPoint(e.clientX,e.clientY),k=el&&el.closest&&el.closest('#keys [data-m]');if(k&&k!==held.get(e.pointerId)){held.set(e.pointerId,k);pkey(+k.dataset.m,me,true)}});
+['pointerup','pointercancel','pointerleave'].forEach(t=>$('keys').addEventListener(t,e=>held.delete(e.pointerId)));
+const KMAP={a:0,w:1,s:2,e:3,d:4,f:5,t:6,g:7,y:8,h:9,u:10,j:11,k:12};
+document.addEventListener('keydown',e=>{
+  if($('pianoView').hidden||e.repeat||e.metaKey||e.ctrlKey||e.altKey)return;const tg=e.target&&e.target.tagName;if(tg==='INPUT'||tg==='TEXTAREA'||tg==='SELECT')return;
+  const o=KMAP[e.key.toLowerCase()];if(o===undefined)return;e.preventDefault();pkey(12*(oct+1)+o,me,true)});
+$('octDown').addEventListener('click',()=>{if(oct>2){oct--;buildKeys()}});
+$('octUp').addEventListener('click',()=>{if(oct<6){oct++;buildKeys()}});
+$('pRec').addEventListener('click',()=>{
+  if(!prec.on){prec.on=true;prec.t0=performance.now();prec.ev=[];$('pRec').textContent='■ 녹음 멈추기';$('pRec').classList.add('armed','danger');$('pPlay').disabled=$('pDl').disabled=true;setStatus('연주를 녹음하고 있어요. 친구들 소리도 함께 담겨요.');return}
+  prec.on=false;$('pRec').textContent='● 연주 녹음';$('pRec').classList.remove('armed');const n=prec.ev.length;$('pPlay').disabled=$('pDl').disabled=!n;setStatus(n?`음표 ${n}개를 녹음했어요.`:'녹음된 소리가 없어요.');
+});
+let pTimers=[];
+$('pPlay').addEventListener('click',()=>{
+  if(pTimers.length){pTimers.forEach(clearTimeout);pTimers=[];$('pPlay').textContent='▶ 녹음 듣기';return}
+  ac();$('pPlay').textContent='■ 그만 듣기';
+  for(const [dt,m,a] of prec.ev)pTimers.push(setTimeout(()=>{mel(mf(m),ctx.currentTime+.005);flash(m,a);spawnTrail(m,a);hop(a)},dt));
+  const end=prec.ev.length?prec.ev[prec.ev.length-1][0]+600:0;pTimers.push(setTimeout(()=>{pTimers=[];$('pPlay').textContent='▶ 녹음 듣기'},end));
+});
+$('pDl').addEventListener('click',e=>busy(e.currentTarget,'만드는 중…',async()=>{
+  if(!prec.ev.length)return;const t0=prec.ev[0][0],len=(prec.ev[prec.ev.length-1][0]-t0)/1000+2;
+  const wav=await renderOffline(len,()=>{for(const [dt,m] of prec.ev)mel(mf(m),.05+(dt-t0)/1000)});
+  await downloads.save({filename:baseName()+'_피아노연주.wav',data:new Blob([wav],{type:'audio/wav'})});setStatus('피아노 연주를 WAV 파일로 내려받았어요.')}));
+qa('.vtabs button').forEach(b=>b.addEventListener('click',()=>{
+  const v=b.dataset.view;qa('.vtabs button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  $('gridView').hidden=v!=='grid';$('pianoView').hidden=v!=='piano';$('hintline').hidden=v!=='grid';
+  if(v==='piano'){buildKeys();if(playing)stop()}
+}));
+$('easyBtn').addEventListener('click',()=>{if(!$('pianoView').hidden)buildKeys()});
+}
+</script>
+</body>
+</html>
