@@ -40,6 +40,8 @@ select{min-height:44px;border-radius:12px;border:2px solid var(--line);backgroun
 .pick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 #animals{grid-template-columns:repeat(4,minmax(0,1fr))}
 @media(max-width:600px){#animals{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.pick button:disabled{opacity:.38}
+.pick button small{font-family:'Gowun Dodum';font-size:12px;color:var(--soft);display:block}
 .pick button{display:flex;align-items:center;gap:10px;min-height:64px;font-family:Jua;font-size:19px;text-align:start}
 .dot{flex:none;width:30px;height:30px;border-radius:50%}
 .go{width:100%;margin-top:20px;min-height:60px;background:var(--band);color:#fff;border:0;font-family:Jua;font-size:24px}
@@ -146,6 +148,7 @@ td.n{text-align:end;font-variant-numeric:tabular-nums}
     <p class="hint">선생님이 알려준 번호를 넣어요. 새 방은 남들이 맞히기 어려운 번호를 정해서 친구들에게 알려 주세요.</p>
     <p class="lab">2. 나는 어떤 친구로 들어갈까?</p>
     <div class="pick" id="animals" role="group" aria-label="동물 고르기"></div>
+    <p class="hint" id="takenHint" hidden></p>
     <p class="lab">3. 오늘 내 마음은 무슨 색이야?</p>
     <div class="pick" id="feels" role="group" aria-label="오늘의 마음 색"></div>
     <button class="go" id="go" disabled>작곡판 열기</button>
@@ -221,7 +224,7 @@ td.n{text-align:end;font-variant-numeric:tabular-nums}
     <div class="tabs" role="tablist">
       <button role="tab" data-tab="lyrics" aria-selected="true">가사판</button>
       <button role="tab" data-tab="art" aria-selected="false">우리 그림</button>
-      <button role="tab" data-tab="voice" aria-selected="false">내 목소리</button>
+      <button role="tab" data-tab="voice" aria-selected="false">목소리·노래</button>
       <button role="tab" data-tab="save" aria-selected="false">저장·내려받기</button>
       <button role="tab" data-tab="teacher" aria-selected="false" id="teacherTab" hidden>선생님</button>
     </div>
@@ -257,6 +260,12 @@ td.n{text-align:end;font-variant-numeric:tabular-nums}
           <button id="voiceDel" disabled>내 목소리 지우기</button>
         </div>
         <p class="note">녹음이 끝나면 작곡판 맨 아래 '목소리' 줄에 칸을 찍어 보세요. 내 칸에서는 내 목소리가 나와요.</p>
+        <h3 style="margin-top:22px">노래 부르기 녹음</h3>
+        <p class="note" style="margin-top:0">이어폰을 끼고 우리 곡에 맞춰 노래를 불러요. 버튼을 누르면 곡이 처음부터 나오면서 녹음이 시작되고, 최대 1분까지 녹음돼요. 녹음은 '저장·내려받기'의 녹음 모음에 모여요.</p>
+        <div class="row">
+          <input id="takeName" maxlength="20" placeholder="예: 아이 노래, 엄마의 답가" style="min-height:44px;border-radius:12px;border:2px solid var(--line);background:var(--cell);padding:0 12px;flex:1 1 200px;max-width:300px">
+          <button id="singRec" class="play" style="min-width:0;font-size:18px" disabled>● 곡 틀고 노래 녹음</button>
+        </div>
       </div>
     </div>
 
@@ -267,13 +276,17 @@ td.n{text-align:end;font-variant-numeric:tabular-nums}
         <button id="saveNow">지금 곡 저장</button>
       </div>
       <div class="list" id="saves"></div>
+      <h3 style="margin-top:22px">녹음 모음</h3>
+      <p class="note" style="margin-top:0">노래 녹음과 피아노 연주가 여기에 모여요. '곡에 넣기'를 체크한 녹음은 작곡판과 함께 한 파일로 합쳐져요.</p>
+      <div class="list" id="takes"></div>
       <h3 style="margin-top:22px">내려받기</h3>
       <div class="row" id="dlRow">
+        <label class="check"><input type="checkbox" id="incGrid" checked> 작곡판</label>
         <label>반복 <select id="reps"><option value="2">2번</option><option value="4" selected>4번</option><option value="8">8번</option></select></label>
-        <button id="dl">곡 내려받기 (WAV)</button>
+        <button id="dl">합쳐서 내려받기 (WAV)</button>
         <button id="cover">앨범 표지 내려받기</button>
       </div>
-      <p class="note" id="dlNote">곡은 WAV 파일로 받아요. 앨범 표지에는 제목, 우리 그림, 함께한 친구들, 작곡판 모양이 담겨요.</p>
+      <p class="note" id="dlNote">작곡판과 '곡에 넣기'를 고른 녹음이 WAV 파일 하나로 합쳐져요. 앨범 표지에는 제목, 우리 그림, 함께한 친구들, 작곡판 모양이 담겨요.</p>
     </div>
 
     <div class="card panel" data-panel="teacher" hidden>
@@ -354,7 +367,20 @@ try{const s=JSON.parse(localStorage.getItem('song-me')||'{}');if(ANIMALS[s.a])me
 const ready=()=>{$('go').disabled=!(me&&feel&&/^\d{6}$/.test($('code').value));qa('#animals button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.a===me));qa('#feels button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.f===feel))};
 $('animals').addEventListener('click',e=>{const b=e.target.closest('button');if(b){me=b.dataset.a;ready()}});
 $('feels').addEventListener('click',e=>{const b=e.target.closest('button');if(b){feel=b.dataset.f;ready()}});
-$('code').addEventListener('input',e=>{e.target.value=e.target.value.replace(/\D/g,'').slice(0,6);ready()});
+$('code').addEventListener('input',e=>{e.target.value=e.target.value.replace(/\D/g,'').slice(0,6);ready();clearTimeout(lobbyT);lobbyT=setTimeout(watchLobby,300)});
+let lobby=null,lobbyT=0,taken=new Set();
+function markTaken(){
+  for(const b of qa('#animals button')){const a=b.dataset.a,t=taken.has(a);b.disabled=t;let sm=b.querySelector('small');
+    if(t&&!sm){sm=document.createElement('small');sm.textContent='이미 있어요';b.lastChild.after(sm)}else if(!t&&sm)sm.remove()}
+  if(me&&taken.has(me)){me=null;ready()}
+}
+function stopLobby(){if(lobby&&sb){try{sb.removeChannel(lobby)}catch(e){}}lobby=null}
+function watchLobby(){
+  stopLobby();taken=new Set();markTaken();const c=$('code').value;if(!sb||!/^\d{6}$/.test(c)||!$('join').offsetParent&&$('join').hidden)return;
+  lobby=sb.channel('song-'+c,{config:{presence:{key:'lobby-'+Math.random().toString(36).slice(2)}}});
+  const l=lobby;l.on('presence',{event:'sync'},()=>{if(l!==lobby)return;const st=l.presenceState();taken=new Set();for(const k in st)for(const m of st[k])if(m&&ANIMALS[m.animal])taken.add(m.animal);markTaken()}).subscribe();
+}
+setTimeout(watchLobby,200);
 $('go').addEventListener('click',enter);ready();
 
 /* ---------- 작곡판 ---------- */
@@ -468,7 +494,9 @@ qa('[data-cheer]').forEach(b=>b.addEventListener('click',()=>{
 }));
 
 /* ---------- 방 들어가기 ---------- */
+let joinT=0;
 async function enter(){
+  stopLobby();$('takenHint').hidden=true;joinT=Date.now();
   code=$('code').value;
   try{localStorage.setItem('song-me',JSON.stringify({a:me,c:code,e:easy}))}catch(e){}
   $('join').hidden=true;$('studio').hidden=false;setEasy(easy);
@@ -489,8 +517,10 @@ function rowToSave(x){const d=x&&x.data||{};if(!x||typeof x.name!=='string'||!d.
 async function loadAll(){
   const q=[sb.from('song_rooms').select('settings').eq('code',code).maybeSingle(),sb.from('song_cells').select('id,by').eq('code',code),
     sb.from('song_lyrics').select('animal,text').eq('code',code),sb.from('song_voices').select('animal,pcm').eq('code',code),
-    sb.from('song_art').select('img').eq('code',code).maybeSingle(),sb.from('song_saves').select('id,name,data,created_at').eq('code',code).order('created_at')];
-  const [r,c,l,v,a,sv]=(await Promise.all(q)).map(ok);
+    sb.from('song_art').select('img').eq('code',code).maybeSingle(),sb.from('song_saves').select('id,name,data,created_at').eq('code',code).order('created_at'),
+    sb.from('song_takes').select('id,kind,name,animal,path,mime,lead,dur,data,removed,created_at').eq('code',code).eq('removed',false).order('created_at')];
+  const [r,c,l,v,a,sv,tk]=(await Promise.all(q)).map(ok);
+  takes=(tk||[]).map(rowToTake).filter(Boolean);renderTakes();
   if(r)S=clean(r.settings);
   cells=new Map((c||[]).filter(x=>ANIMALS[x.by]&&byId.has(x.id)).map(x=>[x.id,x.by]));
   lyrics=new Map((l||[]).filter(x=>ANIMALS[x.animal]).map(x=>[x.animal,String(x.text||'').slice(0,40)]));
@@ -512,11 +542,15 @@ function subscribe(){
   pc('*','song_art',1,()=>refetchArt());
   pc('INSERT','song_saves',1,p=>{const v=rowToSave(p.new);if(v&&!saves.some(x=>x.id===v.id)){saves.push(v);renderSaves()}});
   pc('*','song_logs',1,()=>{if(teacher)loadLogs()});
+  pc('INSERT','song_takes',1,p=>{const t=rowToTake(p.new);if(t&&!takes.some(x=>x.id===t.id)){takes.push(t);renderTakes()}});
+  pc('UPDATE','song_takes',1,p=>{const n=p.new;if(n&&n.removed){takes=takes.filter(x=>x.id!==n.id);takeOn.delete(n.id);renderTakes()}});
   chan.on('broadcast',{event:'play'},()=>start()).on('broadcast',{event:'stop'},()=>stop())
     .on('broadcast',{event:'cheer'},m=>{const d=m&&m.payload;if(d)floatCheer(d.k,d.a)})
     .on('broadcast',{event:'keys'},m=>{const d=m&&m.payload;if(!d||!ANIMALS[d.a]||!Array.isArray(d.k))return;for(const x of d.k.slice(0,40)){if(!Array.isArray(x))continue;const [dt,n]=x;if(Number.isInteger(n)&&n>=24&&n<=108&&typeof dt==='number'&&dt>=0&&dt<1000)setTimeout(()=>pkey(n,d.a,false),dt)}})
-    .on('presence',{event:'sync'},()=>{const st=chan.presenceState(),list=[];for(const k in st)for(const m of st[k])list.push({peer:k,presence:m,isMe:k===key,sameTab:k===key});renderPeers(list)})
-    .subscribe(async status=>{if(status==='SUBSCRIBED'){try{await chan.track({animal:me,feel})}catch(e){}}else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')setStatus('실시간 연결이 불안정해요. 잠시 뒤 새로고침해 주세요.')});
+    .on('presence',{event:'sync'},()=>{const st=chan.presenceState(),list=[];let dup=false;for(const k in st)for(const m of st[k]){list.push({peer:k,presence:m,isMe:k===key,sameTab:k===key});if(k!==key&&m&&m.animal===me&&(typeof m.t!=='number'||m.t<joinT||(m.t===joinT&&k<key)))dup=true}
+      if(dup){const nm=ANIMALS[me][0];leaveRoom();$('takenHint').textContent=`${nm} 친구가 이미 방에 있어요. 다른 동물을 골라 볼까요?`;$('takenHint').hidden=false;me=null;ready();return}
+      renderPeers(list)})
+    .subscribe(async status=>{if(status==='SUBSCRIBED'){try{await chan.track({animal:me,feel,t:joinT})}catch(e){}}else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')setStatus('실시간 연결이 불안정해요. 잠시 뒤 새로고침해 주세요.')});
   const c=chan;unsubs.push(()=>sb.removeChannel(c));
 }
 async function tryTeacher(pin,silent){
@@ -539,11 +573,12 @@ function renderPeers(list){
   stageRender();peerStatus();renderLyrics();
 }
 function peerStatus(){if(!live)return;const n=peerList.length;setStatus(S.lock?'선생님이 작곡판을 잠깐 멈췄어요. 들어 보기는 할 수 있어요.':n>1?`지금 ${n}명이 함께 만들고 있어요. 친구가 찍은 소리가 바로 보여요.`:'연결됐어요. 친구가 같은 방 번호로 들어오면 함께 만들 수 있어요.')}
-$('leave').addEventListener('click',async()=>{
-  stop();unsubs.forEach(u=>{try{u()}catch(e){}});unsubs=[];clearTimeout(loadT);flushLog();
-  chan=null;teacher=false;tPin='';
-  laneMode=false;$('studio').hidden=true;$('join').hidden=false;
-});
+function leaveRoom(){
+  stop();if(singing)stopSing(true);unsubs.forEach(u=>{try{u()}catch(e){}});unsubs=[];clearTimeout(loadT);flushLog();
+  chan=null;teacher=false;tPin='';takes=[];takeOn.clear();
+  laneMode=false;$('studio').hidden=true;$('join').hidden=false;setTimeout(watchLobby,400);
+}
+$('leave').addEventListener('click',leaveRoom);
 
 /* ---------- 탭 ---------- */
 qa('[role=tab]').forEach(t=>t.addEventListener('click',()=>{qa('[role=tab]').forEach(x=>x.setAttribute('aria-selected',x===t));qa('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==t.dataset.tab);if(t.dataset.tab==='art')padInit()}));
@@ -585,7 +620,7 @@ $('hang').addEventListener('click',async()=>{
 
 /* ---------- 목소리 ---------- */
 const voiceCache=new Map();
-function voiceUI(){const has=voices.has(me),ok=$('consent').checked&&canWrite;$('rec').disabled=!ok;$('recLabel').style.opacity=ok?1:.45;$('micRec').disabled=!ok;$('voiceTry').disabled=!has;$('voiceDel').disabled=!has||!canWrite}
+function voiceUI(){const has=voices.has(me),ok=$('consent').checked&&canWrite;$('rec').disabled=!ok;$('recLabel').style.opacity=ok?1:.45;$('micRec').disabled=!ok;$('voiceTry').disabled=!has;$('voiceDel').disabled=!has||!canWrite;if(typeof singUI==='function')singUI()}
 $('consent').addEventListener('change',voiceUI);
 $('rec').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(f)processVoice(f)});
 $('micRec').addEventListener('click',async()=>{
@@ -751,9 +786,10 @@ const baseName=()=>($('title').value.trim()||'우리노래').replace(/[\\/:*?"<>
 function dlErr(err){const c=err&&err.code;setStatus(c==='declined'?'내려받기를 취소했어요.':c==='rate_limited'?'잠시 뒤 다시 눌러 주세요.':c==='host_unavailable'?'이 앱에서는 파일을 저장할 수 없어요. 브라우저나 컴퓨터에서 열어 주세요.':'내려받기에 실패했어요. 다시 시도해 주세요.')}
 async function busy(btn,label,fn){if(btn.disabled)return;const t=btn.textContent;btn.disabled=true;btn.textContent=label;try{await fn()}catch(e){dlErr(e)}finally{btn.disabled=false;btn.textContent=t}}
 $('dl').addEventListener('click',e=>busy(e.currentTarget,'곡 만드는 중…',async()=>{
-  if(!downloads)return;if(![...cells.values()].some(a=>ANIMALS[a])){setStatus('아직 찍은 소리가 없어요. 칸을 눌러 소리를 놓아 주세요.');return}
-  if(playing)stop();const wav=await renderWav(+$('reps').value);
-  await downloads.save({filename:baseName()+'.wav',data:new Blob([wav],{type:'audio/wav'})});setStatus('곡을 WAV 파일로 내려받았어요.')}));
+  const useGrid=$('incGrid').checked&&[...cells.values()].some(a=>ANIMALS[a]),sel=takes.filter(t=>takeOn.has(t.id));
+  if(!useGrid&&!sel.length){setStatus('넣을 소리가 없어요. 작곡판에 칸을 찍거나 녹음 모음에서 곡에 넣을 녹음을 골라 주세요.');return}
+  if(playing)stop();const wav=await mixWav(useGrid,sel);
+  await downloads.save({filename:baseName()+'.wav',data:new Blob([wav],{type:'audio/wav'})});setStatus(sel.length?`작곡판${useGrid?'':' 없이'}과 녹음 ${sel.length}개를 합쳐서 내려받았어요.`:'곡을 WAV 파일로 내려받았어요.')}));
 $('cover').addEventListener('click',e=>busy(e.currentTarget,'표지 만드는 중…',async()=>{
   if(!downloads)return;
   const cv=document.createElement('canvas');cv.width=cv.height=1080;const x=cv.getContext('2d');
@@ -827,7 +863,8 @@ $('octDown').addEventListener('click',()=>{if(oct>2){oct--;buildKeys()}});
 $('octUp').addEventListener('click',()=>{if(oct<6){oct++;buildKeys()}});
 $('pRec').addEventListener('click',()=>{
   if(!prec.on){prec.on=true;prec.t0=performance.now();prec.ev=[];$('pRec').textContent='■ 녹음 멈추기';$('pRec').classList.add('armed','danger');$('pPlay').disabled=$('pDl').disabled=true;setStatus('연주를 녹음하고 있어요. 친구들 소리도 함께 담겨요.');return}
-  prec.on=false;$('pRec').textContent='● 연주 녹음';$('pRec').classList.remove('armed');const n=prec.ev.length;$('pPlay').disabled=$('pDl').disabled=!n;setStatus(n?`음표 ${n}개를 녹음했어요.`:'녹음된 소리가 없어요.');
+  prec.on=false;$('pRec').textContent='● 연주 녹음';$('pRec').classList.remove('armed');const n=prec.ev.length;$('pPlay').disabled=$('pDl').disabled=!n;setStatus(n?`음표 ${n}개를 녹음했어요. 녹음 모음에 저장할게요.`:'녹음된 소리가 없어요.');
+  if(n)savePianoTake();
 });
 let pTimers=[];
 $('pPlay').addEventListener('click',()=>{
@@ -846,6 +883,92 @@ qa('.vtabs button').forEach(b=>b.addEventListener('click',()=>{
   if(v==='piano'){buildKeys();if(playing)stop()}
 }));
 $('easyBtn').addEventListener('click',()=>{if(!$('pianoView').hidden)buildKeys()});
+/* ---------- 녹음 모음 (노래·피아노) ---------- */
+let takes=[];const takeOn=new Set(),takeBuf=new Map();
+function rowToTake(x){if(!x||x.removed||!['sing','piano'].includes(x.kind)||!ANIMALS[x.animal]||typeof x.name!=='string')return null;
+  if(x.kind==='sing'&&(typeof x.path!=='string'||!/^\d{6}\/[0-9a-f-]{36}\.(webm|mp4|ogg|m4a|wav)$/.test(x.path)))return null;
+  if(x.kind==='piano'&&!(x.data&&Array.isArray(x.data.ev)))return null;return x}
+function renderTakes(){
+  const box=$('takes');box.innerHTML='';
+  if(!takes.length){box.innerHTML='<p class="note">아직 녹음이 없어요. 목소리·노래 탭에서 노래를 녹음하거나, 함께 피아노에서 연주를 녹음해 보세요.</p>';return}
+  for(const t of takes){
+    const d=document.createElement('div'),f=document.createElement('span'),b=document.createElement('b'),sm=document.createElement('small'),pl=document.createElement('button'),lb=document.createElement('label'),cb=document.createElement('input');
+    f.innerHTML=face(t.animal);f.style.cssText='width:34px;height:34px;flex:none;display:block';
+    b.textContent=t.name.slice(0,20);sm.textContent=`${t.kind==='sing'?'노래':'피아노'} · ${ANIMALS[t.animal][0]} · ${Math.max(1,Math.round(t.dur||0))}초`;
+    pl.textContent='▶ 듣기';pl.addEventListener('click',()=>previewTake(t,pl));
+    cb.type='checkbox';cb.checked=takeOn.has(t.id);cb.style.cssText='width:22px;height:22px;accent-color:var(--band)';cb.addEventListener('change',()=>{cb.checked?takeOn.add(t.id):takeOn.delete(t.id)});
+    lb.className='check';lb.append(cb,' 곡에 넣기');d.append(f,b,sm,pl,lb);
+    if(t.animal===me||teacher){const del=document.createElement('button');del.textContent='지우기';armed(del,'정말 지울까요?',()=>removeTake(t));d.append(del)}
+    box.append(d)}
+}
+async function removeTake(t){takes=takes.filter(x=>x.id!==t.id);takeOn.delete(t.id);renderTakes();if(!live)return;try{ok(await sb.from('song_takes').update({removed:true}).eq('id',t.id))}catch(e){writeErr(e)}}
+async function takeBuffer(t){
+  if(takeBuf.has(t.id))return takeBuf.get(t.id);
+  const r=await sb.storage.from('song-audio').download(t.path);if(r.error)throw r.error;
+  const b=await ac().decodeAudioData(await r.data.arrayBuffer());takeBuf.set(t.id,b);return b;
+}
+let prevSrc=null,prevTimers=[];
+function stopPreview(){if(prevSrc){try{prevSrc.stop()}catch(e){}prevSrc=null}prevTimers.forEach(clearTimeout);prevTimers=[];qa('#takes button').forEach(x=>{if(x.textContent==='■ 그만')x.textContent='▶ 듣기'})}
+async function previewTake(t,btn){
+  if(btn.textContent==='■ 그만'){stopPreview();return}stopPreview();btn.textContent='■ 그만';
+  try{
+    if(t.kind==='sing'){const b=await takeBuffer(t),s=ctx.createBufferSource();s.buffer=b;s.connect(ctx.destination);s.start();prevSrc=s;s.onended=()=>{if(prevSrc===s){prevSrc=null;btn.textContent='▶ 듣기'}}}
+    else{ac();const keep=S.inst;for(const [dt,m] of t.data.ev.slice(0,3000))prevTimers.push(setTimeout(()=>{const k2=S.inst;S.inst=t.data.inst||keep;mel(mf(m),ctx.currentTime+.005);S.inst=k2},dt));
+      const end=t.data.ev.length?t.data.ev[t.data.ev.length-1][0]+700:0;prevTimers.push(setTimeout(()=>{prevTimers=[];btn.textContent='▶ 듣기'},end))}
+  }catch(e){btn.textContent='▶ 듣기';setStatus('녹음을 불러오지 못했어요. 잠시 뒤 다시 눌러 주세요.')}
+}
+async function savePianoTake(){
+  const t0=prec.ev[0][0],ev=prec.ev.slice(0,3000).map(([dt,m])=>[Math.round(dt-t0),m]),dur=Math.min(120,ev[ev.length-1][0]/1000+1);
+  const n=takes.filter(t=>t.kind==='piano').length+1,row={code,kind:'piano',name:`피아노 연주 ${n}`,animal:me,dur,data:{ev,inst:S.inst}};
+  if(!live){takes.push({id:'local'+Date.now(),...row});renderTakes();return}
+  try{const r=ok(await sb.from('song_takes').insert(row).select().single());const t=rowToTake(r);if(t&&!takes.some(x=>x.id===t.id)){takes.push(t);renderTakes()}setStatus(`'${row.name}'을 녹음 모음에 저장했어요.`)}catch(e){writeErr(e)}
+}
+/* 노래 부르기 녹음 */
+let singing=null;
+function singUI(){const okk=$('consent').checked&&canWrite&&live;$('singRec').disabled=!okk&&!singing}
+$('consent').addEventListener('change',singUI);
+async function startSing(){
+  try{
+    const st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
+    const types=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg'],mt=types.find(x=>window.MediaRecorder&&MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(x))||'';
+    const mr=mt?new MediaRecorder(st,{mimeType:mt,audioBitsPerSecond:64000}):new MediaRecorder(st),ch=[];
+    mr.ondataavailable=e=>{if(e.data&&e.data.size)ch.push(e.data)};
+    const r0=performance.now();mr.start(1000);start();const m0=performance.now()+60;
+    singing={mr,st,ch,r0,lead:(m0-r0)/1000,end:r0+60000};
+    singing.tick=setInterval(()=>{const left=Math.ceil((singing.end-performance.now())/1000);$('singRec').textContent=`■ 녹음 끝내기 (${left}초)`;if(left<=0)stopSing(false)},250);
+    $('singRec').classList.add('danger','armed');setStatus('노래를 녹음하고 있어요. 곡에 맞춰 불러 보세요.');
+  }catch(e){singing=null;setStatus('마이크를 쓸 수 없어요. 태블릿 설정에서 이 사이트의 마이크 권한을 허용해 주세요.')}
+}
+function stopSing(discard){
+  const sg=singing;if(!sg)return;singing=null;clearInterval(sg.tick);stop();
+  $('singRec').textContent='● 곡 틀고 노래 녹음';$('singRec').classList.remove('armed');singUI();
+  sg.mr.onstop=async()=>{sg.st.getTracks().forEach(t=>t.stop());if(discard)return;
+    const dur=(performance.now()-sg.r0)/1000;if(dur<1){setStatus('녹음이 너무 짧아요.');return}
+    const type=(sg.mr.mimeType||'audio/webm').split(';')[0],ext=type.includes('mp4')?'mp4':type.includes('ogg')?'ogg':'webm',blob=new Blob(sg.ch,{type});
+    const name=($('takeName').value.trim()||`${ANIMALS[me][0]} 노래`).slice(0,20);
+    try{setStatus('노래를 저장하는 중…');
+      const id=(crypto.randomUUID?crypto.randomUUID():([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,c=>(c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16)));
+      const path=`${code}/${id}.${ext}`;const up=await sb.storage.from('song-audio').upload(path,blob,{contentType:type,upsert:false});if(up.error)throw up.error;
+      const row={code,kind:'sing',name,animal:me,path,mime:type,lead:Math.max(-5,Math.min(5,sg.lead)),dur:Math.min(120,dur)};
+      const t=rowToTake(ok(await sb.from('song_takes').insert(row).select().single()));if(t&&!takes.some(x=>x.id===t.id)){takes.push(t);takeOn.add(t.id);renderTakes()}
+      $('takeName').value='';setStatus(`'${name}'을 녹음 모음에 저장했어요. 저장·내려받기에서 곡과 합칠 수 있어요.`);
+    }catch(e){setStatus(e&&e.code?'저장하지 못했어요. 목소리 줄이 켜져 있는지 확인해 주세요.':'노래를 저장하지 못했어요. 인터넷을 확인하고 다시 녹음해 주세요.')}
+  };
+  try{sg.mr.stop()}catch(e){}
+}
+$('singRec').addEventListener('click',()=>singing?stopSing(false):startSing());
+async function mixWav(useGrid,sel){
+  const reps=+$('reps').value,stepDur=60/S.bpm/4,gridLen=useGrid?STEPS*reps*stepDur:0,bufs=new Map();
+  for(const t of sel)if(t.kind==='sing')bufs.set(t.id,await takeBuffer(t));
+  let len=gridLen;for(const t of sel)len=Math.max(len,t.kind==='sing'?bufs.get(t.id).duration:(t.dur||0));
+  return renderOffline(len+1.5,()=>{
+    if(useGrid)for(let i=0;i<STEPS*reps;i++){const s=i%STEPS,tt=.05+i*stepDur;for(const r of ROWS){if(r.id==='vo'&&!S.voiceOn)continue;const a=cells.get(r.id+'-'+s);if(ANIMALS[a])sound(r,tt,a)}}
+    for(const t of sel){
+      if(t.kind==='sing'){const src=C.createBufferSource(),g=C.createGain();g.gain.value=1;src.buffer=bufs.get(t.id);src.connect(g);g.connect(C.destination);const lead=t.lead||0;src.start(Math.max(0,.05-lead),Math.max(0,lead-.05))}
+      else{const keep=S.inst;S.inst=t.data.inst||keep;for(const [dt,m] of t.data.ev.slice(0,3000))mel(mf(m),.05+dt/1000);S.inst=keep}
+    }
+  });
+}
 }
 </script>
 </body>
